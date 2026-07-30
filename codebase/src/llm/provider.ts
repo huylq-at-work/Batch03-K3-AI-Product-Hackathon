@@ -1,7 +1,6 @@
 import type { TurnResult } from '../types';
 
-import type Anthropic from '@anthropic-ai/sdk';
-import type { ContextResult } from '../agent/context-phase';
+import type { ToolChatFn } from '../agent/tool-loop';
 
 export interface LlmProvider {
   /** Tên hiện trên UI + ghi vào trace. */
@@ -11,10 +10,15 @@ export interface LlmProvider {
   /** Stage ★ — quyết định AI trung tâm. Không có tool, output ràng buộc schema. */
   complete(system: string, user: string): Promise<TurnResult>;
   /**
-   * Pha 1 — vòng lặp tool tra catalog đề tài. `undefined` = provider không hỗ trợ
-   * tool; app khi đó bỏ qua pha này và vào thẳng phỏng vấn.
+   * Một lượt hội thoại CÓ TOOL, dùng cho cố vấn (tra catalog + tạo khảo sát).
+   *
+   * `undefined` = provider không hỗ trợ tool (mock, gemini) → cố vấn chạy ở chế độ
+   * không tool: vẫn tư vấn được, chỉ không tra được đề tài và không tự tạo khảo sát.
+   *
+   * Kiểu TRUNG LẬP, không theo SDK nào. Bản trước khai `Anthropic.MessageParam[]`
+   * nên chỉ Anthropic dùng được — có key OpenAI mà tính năng chính không chạy.
    */
-  contextPhase?(messages: Anthropic.MessageParam[]): Promise<ContextResult>;
+  toolChat?: ToolChatFn;
 }
 
 /** Bản ghi mỗi lời gọi AI — R5: "log/trace trong repo". */

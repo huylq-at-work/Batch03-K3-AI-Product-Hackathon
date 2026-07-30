@@ -96,6 +96,51 @@ export const CATALOG_TOOLS: typeof ALL_CATALOG_TOOLS | [] = deTaiToolsDisabled()
 export type ToolName = (typeof ALL_CATALOG_TOOLS)[number]['name'];
 
 /**
+ * Tool để cố vấn TỰ TẠO sub-agent khảo sát.
+ *
+ * Đây là chỗ "tự động tạo sub-agent": người dùng không phải điền form nào. Cố vấn
+ * đào 5-why với họ trước, và chỉ khi đã biết cần hỏi ai về cái gì thì mới tạo —
+ * nên `chu_de`/`persona_in` là kết luận của cuộc tư vấn, không phải input người
+ * dùng đoán từ đầu.
+ *
+ * ⚠️ Tool này GHI dữ liệu (khác 3 tool catalog chỉ đọc). Nên nó không được tự chạy
+ * ngầm: `runTool` trả về bản nháp kèm `can_xac_nhan: true`, và UI phải để người
+ * dùng bấm xác nhận. Agent tạo hàng loạt khảo sát rác là lỗi rất khó dọn khi mọi
+ * thứ nằm trong localStorage.
+ */
+export const TAO_KHAO_SAT_TOOL = {
+  name: 'tao_khao_sat',
+  description:
+    'Tạo một chatbot khảo sát 5-why để người dùng gửi cho người khác trả lời. ' +
+    'CHỈ gọi khi đã đào 5-why với chính người dùng và xác định được: hỏi AI về vấn đề gì, ' +
+    'và hỏi NHÓM NGƯỜI NÀO. Đừng gọi ở lượt đầu — lúc đó chưa biết hỏi gì. ' +
+    'Tool trả về bản nháp; người dùng sẽ bấm xác nhận rồi mới có link.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      ten: { type: 'string', description: 'Tên ngắn của khảo sát, hiện trên sidebar.' },
+      chu_de: {
+        type: 'string',
+        description:
+          'Vấn đề cần đào, viết theo góc nhìn NGƯỜI TRẢ LỜI. ' +
+          'Không nhắc kết luận của người dùng — nhắc là mớm đáp án.',
+      },
+      persona_in: {
+        type: 'string',
+        description: 'Nhóm người sẽ trả lời, cụ thể. VD: "SV VinUni K3/K4 đang chọn đề tài".',
+      },
+      so_tang: { type: 'integer', description: 'Số tầng why tối đa, 3–7. Mặc định 5.' },
+      cong_khai: {
+        type: 'boolean',
+        description: 'true = ai có link cũng trả lời được (cần cho người ngoài nhóm). Mặc định true.',
+      },
+    },
+    required: ['ten', 'chu_de', 'persona_in'],
+    additionalProperties: false,
+  },
+} as const;
+
+/**
  * Thực thi tool. Trả về object sẽ được JSON.stringify vào tool_result.
  *
  * Không throw: lỗi trả về dạng `{ error }` để model đọc được và nói lại với người
@@ -138,25 +183,87 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
       return xemDeTai(input.ma);
     }
 
+    // Tool GHI: không tự lưu ở đây. Trả bản nháp, UI cho người dùng xác nhận.
+    // Xem chú thích ở TAO_KHAO_SAT_TOOL.
+    case 'tao_khao_sat': {
+      const ten = typeof input.ten === 'string' ? input.ten.trim() : '';
+      const chu_de = typeof input.chu_de === 'string' ? input.chu_de.trim() : '';
+      const persona_in = typeof input.persona_in === 'string' ? input.persona_in.trim() : '';
+      if (!ten || !chu_de || !persona_in) {
+        return {
+          error: 'thieu_thong_tin',
+          message: 'Cần đủ ten, chu_de, persona_in. Hỏi người dùng cho rõ trước khi tạo.',
+        };
+      }
+      return {
+        can_xac_nhan: true,
+        nhap: {
+          ten,
+          chu_de,
+          persona_in,
+          so_tang: Math.min(Math.max(typeof input.so_tang === 'number' ? input.so_tang : 5, 3), 7),
+          cong_khai: input.cong_khai !== false,
+        },
+        message:
+          'Đã dựng bản nháp khảo sát. Nói cho người dùng biết bạn định hỏi ai về cái gì, ' +
+          'và bảo họ bấm "Tạo khảo sát" để lấy link. CHƯA có link ở bước này — đừng bịa link.',
+      };
+    }
+
     default:
       return { error: 'tool_khong_ton_tai', name };
   }
 }
 
-/** Prompt cho pha 1. Ngắn có chủ đích — pha này chỉ để chốt ngữ cảnh, không phỏng vấn. */
-export const CONTEXT_SYSTEM_PROMPT = `Bạn đang giúp một sinh viên VinUni khoá 3/khoá 4 xác định họ đang xét đề tài capstone nào, trước khi bắt đầu phỏng vấn 5-why.
+/** Tool của cố vấn: 3 tool catalog (nếu không bị tắt) + tool tạo khảo sát. */
+export const ADVISOR_TOOLS = [...CATALOG_TOOLS, TAO_KHAO_SAT_TOOL];
 
-Bạn có 3 tool để tra catalog ${TONG_DE_TAI} đề tài. Dùng chúng — **đừng đoán**.
+/**
+ * Prompt CỐ VẤN — agent chính, cái người dùng nói chuyện khi mở app.
+ *
+ * Việc của nó là **tư vấn và dẫn người dùng tìm painpoint của chính họ**. Tạo
+ * khảo sát chỉ là bước cuối, khi đã biết cần hỏi ai về cái gì.
+ *
+ * Khác prompt của sub-agent (`prompt.ts`) ở một điểm cốt lõi: sub-agent PHẢI hỏi
+ * đúng một câu mỗi lượt và không được giải thích gì (nó đang lấy bằng chứng từ
+ * người lạ). Cố vấn thì được phép giải thích, được phép nói người dùng đang nhầm
+ * — vì người dùng là người cần học cách đào, không phải đối tượng bị đo.
+ */
+export const ADVISOR_SYSTEM_PROMPT = `Bạn là cố vấn giúp sinh viên VinUni khoá 3/khoá 4 tìm ra **painpoint thật** của đề tài capstone mà họ đang làm.
 
-# Luật
-- Sinh viên đưa mã đề (EDU-01, AIP-02…) → gọi \`xem_de_tai\` ngay.
-- Sinh viên nói chủ đề nhưng chưa có mã → \`tim_de_tai\`, rồi hỏi họ chọn mã nào.
-- Sinh viên chưa biết bắt đầu từ đâu → \`liet_ke_khoi\`.
-- **Chỉ nói về đề tài mà tool đã trả về.** Không có trong kết quả tool thì nói không tra được. Không mô tả đề tài từ suy đoán, không phát biểu về thị trường hay việc "đã có ai làm chưa".
-- \`bi_cat\` > 0 nghĩa là còn kết quả bạn CHƯA thấy. Hỏi sinh viên thu hẹp, đừng kết luận.
-- Sinh viên chưa chọn được đề nào cũng không sao — phỏng vấn 5-why vẫn chạy được mà không cần đề tài. Đừng ép họ chọn.
+Vấn đề bạn tồn tại để giải quyết: sinh viên hay nhận nhầm **triệu chứng** ("khó chọn đề", "mất thời gian") là painpoint, rồi xây sản phẩm cho triệu chứng đó. Việc của bạn là đào xuống tới nguyên nhân **can thiệp được**.
 
-# Xong việc
-Khi đã chốt được (a) một mã đề tài, hoặc (b) sinh viên nói rõ chưa chọn được — dừng gọi tool và tóm tắt trong **2 câu**: đề tài nào (hoặc chưa có), và một câu về vấn đề mà mô tả đề tài nêu. Đó là ngữ cảnh cho pha phỏng vấn.
+# Bốn bước, theo thứ tự
 
-Ngắn gọn. Không khen. Không dạy.`;
+**1. Đề tài nào.** Hỏi họ đang xét đề tài capstone nào.
+- Có mã đề (EDU-01, AIP-02…) → gọi \`xem_de_tai\` ngay.
+- Nói chủ đề chung chung → \`tim_de_tai\`, rồi để họ chọn mã.
+- Chưa biết bắt đầu từ đâu → \`liet_ke_khoi\`.
+- Chưa chọn được đề nào cũng không sao, vẫn đào được. **Đừng ép họ chọn.**
+
+**2. Đào 5-why với CHÍNH HỌ.** Mỗi lượt hỏi một câu "vì sao". Với mỗi câu trả lời, nói thẳng nó là:
+- **triệu chứng** — biểu hiện bề mặt, chưa nói vì sao
+- **điều kiện** — hoàn cảnh không đổi được (deadline trường đặt, số lượng đề)
+- **nguyên nhân** — một hành động, lựa chọn, hoặc một cái ĐANG THIẾU mà nếu bù vào thì vấn đề hết. **Chỉ loại này mới can thiệp được.**
+
+Phép thử: *"làm gì để việc này không còn đúng nữa?"* Trả lời được cụ thể → nguyên nhân. Không → đào tiếp.
+
+**3. Chốt painpoint.** Khi tới nguyên nhân can thiệp được, phát biểu lại painpoint trong một câu, và nói rõ nó khác gì với câu họ nói ban đầu.
+
+**4. Tạo khảo sát để lấy bằng chứng.** Painpoint mới chỉ là của một người. Giải thích cho họ: cần hỏi thêm người khác mới biết đây là vấn đề chung hay chỉ riêng họ. Rồi gọi \`tao_khao_sat\` với:
+- \`chu_de\`: viết theo góc nhìn NGƯỜI TRẢ LỜI, **không nhắc kết luận của người dùng** — nhắc là mớm đáp án cho người trả lời.
+- \`persona_in\`: nhóm người cụ thể cần hỏi.
+
+Tool trả bản nháp, **chưa có link**. Nói họ bấm "Tạo khảo sát". Đừng bịa link.
+
+# Luật cứng
+- **Chỉ nói về đề tài mà tool đã trả về.** Không có trong kết quả tool thì nói thẳng là không tra được. Tuyệt đối không mô tả đề tài từ suy đoán.
+- \`bi_cat\` > 0 nghĩa là còn kết quả bạn CHƯA thấy. Bảo họ thu hẹp, đừng kết luận trên phần đã thấy.
+- **Không phát biểu về thị trường, đối thủ, hay "đã có ai làm chưa"** — bạn không có tool tra cứu những thứ đó.
+- **Không bịa số.** Người dùng nói số thì trích nguyên văn của họ. Bạn tự nghĩ ra số thì nói rõ đó là phỏng đoán.
+- **Đừng gọi \`tao_khao_sat\` ở lượt đầu.** Lúc đó chưa biết hỏi gì, tạo ra là khảo sát rác.
+- Một câu hỏi mỗi lượt ở bước 2. Đừng hỏi dồn.
+- Không khen ("câu hỏi hay!"). Không nhắc lại lời họ rồi mới trả lời.
+
+# Giọng
+Ngắn. Thẳng. Nói được là họ đang nhầm thì nói. Người dùng cần đào đúng, không cần được đồng ý.`;

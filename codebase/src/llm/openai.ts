@@ -1,5 +1,6 @@
 import { TURN_SCHEMA } from '../agent/schema';
 import { extractJson, normalize, type LlmProvider } from './provider';
+import type { ToolDef, ToolLoopMsg } from '../agent/tool-loop';
 import type { TurnResult } from '../types';
 
 /**
@@ -70,7 +71,102 @@ export function createOpenAiProvider(
 
       return normalize(extractJson(msg.content));
     },
+
+    toolChat: ({ system, tools, messages }) =>
+      openAiToolChat(apiKey, model, baseUrl, system, tools, messages),
   };
+}
+
+/**
+ * Một lượt gọi model có tool, theo function calling của OpenAI.
+ *
+ * Dịch `ToolLoopMsg` trung lập sang định dạng OpenAI. Ba chỗ khác Anthropic, đều
+ * dễ sai:
+ *   1. Lời xin gọi tool là `assistant.tool_calls`, KHÔNG phải content block.
+ *   2. Mỗi kết quả là MỘT message riêng `role: 'tool'` — không gom vào một user
+ *      message như Anthropic. Gom lại là API báo lỗi.
+ *   3. `arguments` là STRING JSON, không phải object. Phải tự parse/stringify.
+ */
+async function openAiToolChat(
+  apiKey: string,
+  model: string,
+  baseUrl: string,
+  system: string,
+  tools: ToolDef[],
+  messages: ToolLoopMsg[],
+): Promise<{ text: string; calls: { id: string; name: string; input: Record<string, unknown> }[] }> {
+  type OaMsg = Record<string, unknown>;
+  const oa: OaMsg[] = [{ role: 'system', content: system }];
+
+  for (const m of messages) {
+    if (m.role === 'user' || m.role === 'assistant') {
+      oa.push({ role: m.role, content: m.text });
+    } else if (m.role === 'tool_calls') {
+      oa.push({
+        role: 'assistant',
+        content: null,
+        tool_calls: m.calls.map((c) => ({
+          id: c.id,
+          type: 'function',
+          function: { name: c.name, arguments: JSON.stringify(c.input) }, // (3)
+        })),
+      });
+    } else {
+      // (2) mỗi kết quả một message riêng
+      for (const r of m.results) {
+        oa.push({ role: 'tool', tool_call_id: r.id, content: r.content });
+      }
+    }
+  }
+
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      temperature: 0,
+      max_tokens: 2048,
+      messages: oa,
+      // Không ép `tool_choice: required` — cố vấn phải được quyền TRẢ LỜI THẲNG
+      // khi không cần tra gì. Ép gọi tool là buộc nó tra catalog cả những lượt
+      // chỉ đang hỏi lại cho rõ.
+      ...(tools.length
+        ? {
+            tools: tools.map((t) => ({
+              type: 'function',
+              function: { name: t.name, description: t.description, parameters: t.input_schema },
+            })),
+          }
+        : {}),
+    }),
+  });
+
+  if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 400)}`);
+
+  const data = (await res.json()) as {
+    choices?: {
+      message?: {
+        content?: string | null;
+        refusal?: string | null;
+        tool_calls?: { id: string; function?: { name?: string; arguments?: string } }[];
+      };
+    }[];
+  };
+  const msg = data.choices?.[0]?.message;
+  if (msg?.refusal) throw new Error(`OpenAI từ chối: ${msg.refusal}`);
+
+  const calls = (msg?.tool_calls ?? []).map((c) => {
+    let input: Record<string, unknown> = {};
+    try {
+      // (3) arguments là string; model đôi khi trả '' cho tool không tham số.
+      input = c.function?.arguments ? JSON.parse(c.function.arguments) : {};
+    } catch {
+      input = {};
+    }
+    return { id: c.id, name: c.function?.name ?? '', input };
+  });
+
+  return { text: msg?.content ?? '', calls };
 }
 
 /** Fallback khi strict json_schema bị từ chối — dán schema vào prompt. */
