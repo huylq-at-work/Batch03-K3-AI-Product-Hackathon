@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ADVISOR_SYSTEM_PROMPT,
   advisorTools,
+  datHamDocKetQua,
   datHamWebSearch,
   deTaiToolsDisabled,
 } from '../agent/tools';
@@ -9,7 +10,7 @@ import { kiemDauRa, kiemDauVao, type ViPham } from '../agent/guard';
 import { timTenRiengKhongNguon } from '../agent/kiem-nguon';
 import { ketQuaTool, runToolLoop, type ToolLoopMsg } from '../agent/tool-loop';
 import { resolveProvider } from '../llm';
-import { agents, newId } from '../store/db';
+import { agents, newId, transcripts } from '../store/db';
 import { HAN_LINK_MS, type SubAgent } from '../types';
 
 /**
@@ -53,6 +54,39 @@ const provider = resolveProvider();
 // trả {error} để agent nói rõ là chưa nghiên cứu được.
 datHamWebSearch(provider.webSearch ? (q) => provider.webSearch!(q) : null);
 
+/**
+ * Tổng hợp phản hồi khảo sát của một user cho tool `tong_hop_khao_sat`.
+ *
+ * Trả về dữ kiện đã đào được (nguyên nhân/triệu chứng/số liệu) để cố vấn suy
+ * persona/leverage/MVP TỪ DỮ LIỆU THẬT, không bịa. Cắt gọn để nhẹ token; nói rõ
+ * mỗi painpoint được bao nhiêu người nhắc — đó là tín hiệu "vấn đề chung hay riêng".
+ */
+function docKetQuaKhaoSat(ownerId: string): unknown {
+  const cacAgent = agents.mine(ownerId);
+  const ts = cacAgent.flatMap((a) => transcripts.byAgent(a.id));
+  const soPhanHoi = ts.length;
+  if (soPhanHoi === 0) return { error: 'chua_co_phan_hoi', message: 'Chưa ai trả lời khảo sát nào.' };
+
+  const gom = (kind: string) =>
+    ts
+      .flatMap((t) => t.chain.filter((n) => n.kind === kind).map((n) => n.claim.trim()))
+      .filter(Boolean);
+
+  return {
+    so_khao_sat: cacAgent.length,
+    so_phan_hoi: soPhanHoi,
+    so_hoan_thanh: ts.filter((t) => t.finishedAt).length,
+    // nguyên nhân = painpoint can thiệp được; đây là cái đáng làm sản phẩm cho.
+    nguyen_nhan: gom('nguyen_nhan').slice(0, 20),
+    trieu_chung: gom('trieu_chung').slice(0, 20),
+    dieu_kien: gom('dieu_kien').slice(0, 10),
+    so_lieu: ts.flatMap((t) => t.numbers.map((n) => `${n.text} (${n.nguon})`)).slice(0, 20),
+    ghi_chu:
+      'nguyen_nhan là painpoint can thiệp được — ưu tiên phân tích nhóm này. Cùng một ý ' +
+      'nhiều người nhắc = vấn đề chung. Chỉ 1 người nhắc = có thể chỉ riêng họ.',
+  };
+}
+
 /** Bản nháp khảo sát do tool `tao_khao_sat` trả về. Chưa lưu gì cả. */
 interface Nhap {
   ten: string;
@@ -92,6 +126,13 @@ export function Advisor({
   // Text đang stream về (hiện dần trong lúc chờ). Xoá khi lượt xong.
   const [stream, setStream] = useState('');
   const logRef = useRef<HTMLDivElement>(null);
+
+  // Cấp hàm đọc kết quả khảo sát cho tool `tong_hop_khao_sat` — cần ownerId nên
+  // đăng ký trong component (không làm được ở top-level như web_search).
+  useEffect(() => {
+    datHamDocKetQua(() => Promise.resolve(docKetQuaKhaoSat(ownerId)));
+    return () => datHamDocKetQua(null);
+  }, [ownerId]);
 
   // Cuộn xuống cuối mỗi khi có lượt mới. `messages.length` chứ không phải cả mảng —
   // tool_results làm mảng đổi mà không có gì mới để xem.

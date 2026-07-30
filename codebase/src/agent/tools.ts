@@ -231,9 +231,21 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
           cong_khai: input.cong_khai !== false,
         },
         message:
-          'Đã dựng bản nháp khảo sát. Nói cho người dùng biết bạn định hỏi ai về cái gì, ' +
-          'và bảo họ bấm "Tạo khảo sát" để lấy link. CHƯA có link ở bước này — đừng bịa link.',
+          'Khảo sát sẽ được tạo NGAY và người dùng được đưa vào trả lời làm phản hồi #1. ' +
+          'Nói ngắn gọn: đã dựng khảo sát về [miền], mời họ trả lời thử rồi gửi link cho người khác.',
       };
+    }
+
+    case 'tong_hop_khao_sat': {
+      if (!hamDocKetQua) {
+        return {
+          error: 'chua_co_ket_qua',
+          message:
+            'Chưa đọc được kết quả khảo sát (chưa tạo khảo sát, hoặc chưa ai trả lời). ' +
+            'Bảo người dùng trả lời thử khảo sát và/hoặc gửi link cho người khác trước.',
+        };
+      }
+      return hamDocKetQua();
     }
 
     default:
@@ -290,12 +302,25 @@ export function datHamWebSearch(fn: ((cauHoi: string) => Promise<unknown>) | nul
 }
 
 /**
- * Đào tối đa bấy nhiêu lượt why rồi PHẢI chốt + tạo khảo sát. Prompt có ghi luật
- * dừng, nhưng gpt-4o-mini bỏ qua khi hội thoại trôi dài (đã đo: hỏi why 7+ lần,
- * quay ra nhại câu người dùng). Nên UI ép cứng: tới mốc này mà chưa tạo khảo sát
- * thì buộc gọi `tao_khao_sat` (xem Advisor.tsx). 5 khớp tên "5-why".
+ * Tool đọc kết quả khảo sát để TỔNG HỢP (bước sau khảo sát: persona / AI leverage /
+ * MVP). Cố vấn không có sẵn dữ liệu khảo sát — nó ở localStorage. Hàm đọc do
+ * Advisor.tsx tiêm vào (`datHamDocKetQua`), giống web_search, để tools.ts không phải
+ * import store/ (tránh vòng phụ thuộc).
  */
-export const CAP_DAO_5WHY = 5;
+export const TONG_HOP_TOOL = {
+  name: 'tong_hop_khao_sat',
+  description:
+    'Đọc các câu trả lời đã thu được của khảo sát (kể cả phản hồi của chính người dùng) để ' +
+    'TỔNG HỢP. CHỈ gọi khi người dùng muốn phân tích kết quả / tìm persona / xét AI leverage / ' +
+    'brainstorm MVP — tức là SAU khi đã có khảo sát và ít nhất một phản hồi. ' +
+    'Trả về: số phản hồi, các nguyên nhân (painpoint) đã đào được, triệu chứng, số liệu.',
+  input_schema: { type: 'object', properties: {}, required: [], additionalProperties: false },
+} as const;
+
+let hamDocKetQua: (() => Promise<unknown>) | null = null;
+export function datHamDocKetQua(fn: (() => Promise<unknown>) | null): void {
+  hamDocKetQua = fn;
+}
 
 /**
  * Tool của cố vấn.
@@ -309,7 +334,7 @@ export const CAP_DAO_5WHY = 5;
  * (KHÔNG dùng để tra catalog) + `runTool`, không cần ẩn tool.
  */
 export function advisorTools(): readonly unknown[] {
-  return [...CATALOG_TOOLS, WEB_SEARCH_TOOL, TAO_KHAO_SAT_TOOL];
+  return [...CATALOG_TOOLS, WEB_SEARCH_TOOL, TAO_KHAO_SAT_TOOL, TONG_HOP_TOOL];
 }
 
 /** Danh sách đầy đủ — dùng cho tài liệu và test, đừng truyền thẳng vào API. */
@@ -370,6 +395,13 @@ Gọi \`tao_khao_sat\`. Khảo sát tự tạo — người dùng KHÔNG phải 
 Sau khi tạo, nói ngắn gọn: *"Mình đã dựng khảo sát 5-why về [miền]. Bạn trả lời thử trước — câu trả lời của bạn tính là phản hồi ĐẦU TIÊN — rồi gửi link (ở danh sách bên trái) cho người khác cùng trả lời."* Con khảo sát áp dụng 5-why giống nhau cho MỌI người, để painpoint lộ ra từ dữ liệu.
 
 **Về link:** link sống **24 giờ**. Ai xin link mới → bảo họ bấm nút **↻ (gia hạn)** cạnh khảo sát. Bạn không tự viết ra URL.
+
+**4. Tổng hợp — SAU khi có phản hồi khảo sát.** Chỉ làm khi người dùng quay lại muốn phân tích kết quả (persona / AI leverage / MVP). **Gọi \`tong_hop_khao_sat\` TRƯỚC** để đọc câu trả lời thật đã thu; nếu nó trả \`error\` (chưa ai trả lời) thì nói thẳng là chưa đủ dữ liệu, bảo họ trả lời thử + gửi link, ĐỪNG bịa. Có dữ liệu rồi mới:
+- **Persona**: ai đã trả lời, họ đang làm gì khi gặp vấn đề — từ chính các câu trả lời, không bịa tên riêng.
+- **AI leverage**: painpoint nào lặp lại nhiều nhất trong phản hồi? Chỗ đó CẦN AI hay chỉ cần CRUD/form? Gọi \`web_search\` xem giải pháp hiện có. Nhiều đề dán "AI Agent" lên việc không cần AI — nói thẳng.
+- **MVP**: 2–3 phương án cho painpoint phổ biến nhất, mỗi cái một câu + chỗ khó nhất. Không tự chọn hộ.
+
+Mọi kết luận ở bước này phải truy về **phản hồi khảo sát thật** (qua \`tong_hop_khao_sat\`) hoặc **nguồn web**, không từ suy đoán.
 
 # Luật web_search
 - CHỈ để research MIỀN đề tài (painpoint, giải pháp hiện có, số liệu). **TUYỆT ĐỐI KHÔNG** tra mã đề / nội dung catalog — web không có dữ liệu đó, dùng \`xem_de_tai\`/\`tim_de_tai\`.
