@@ -13,6 +13,21 @@ npm run dev
 
 Chưa cài Node? `winget install OpenJS.NodeJS.LTS` rồi mở terminal mới.
 
+## Provider (runtime thật: DeepSeek)
+
+App chạy qua provider **OpenAI-compatible**, runtime thật dùng **DeepSeek**:
+
+```bash
+VITE_LLM_PROVIDER=openai
+VITE_OPENAI_BASE_URL=https://api.deepseek.com
+VITE_OPENAI_MODEL=deepseek-v4-flash
+VITE_OPENAI_API_KEY=sk-...        # key DeepSeek
+```
+
+Golden set (`spec.md` §7) vẫn giữ **gpt-4o-mini** để so trước/sau — đổi `BASE_URL`/`MODEL` về OpenAI khi chạy đối chiếu.
+
+**Lưu ý model thinking (deepseek-v4-flash):** structured output dùng `jsonMode` (không phải `json_schema`) và forced `tool_choice` có degrade — vì model thinking trả `400` với hai thứ đó. Đừng đổi lại `json_schema`, khảo sát sẽ hỏng. Chi tiết: `src/llm/langchain-common.ts`.
+
 ## Mức prototype — phần nào thật, phần nào mock
 
 | Phần | Mức | File |

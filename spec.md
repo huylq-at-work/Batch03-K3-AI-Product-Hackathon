@@ -395,8 +395,13 @@ Hai điều kiện 100% là **điều kiện cứng, không thoả hiệp**: m�
 | 1 | 30/07 · mock baseline | 50,0% (7/14) | 100% (23/23) | 77,3% (17/22) | 95,7% (22/23) | ❌ Chưa đạt | [`mock-baseline.md`](eval/runs/mock-baseline.md) |
 | 2 | 30/07 · OpenAI gpt-4o-mini lần 2 | 57,1% (8/14) | 100% (23/23) | 72,7% (16/22) | 100% (23/23) | ❌ Chưa đạt | [`openai-gpt4omini-lan2.md`](eval/runs/openai-gpt4omini-lan2.md) |
 | 3 | 30/07 · Hướng chạy `test:testcase` | 50,0% (7/14) | 100% (23/23) | 78,3% (18/23) | 95,7% (22/23) | ❌ Chưa đạt | [`mock-testcase.md`](eval/runs/mock-testcase.md) · cấu trúc 23 case/4 kiểu đạt |
+| 4 | 30/07 · **DeepSeek `deepseek-v4-flash`** *(runtime thật sau CP5)* | 85,7% (12/14) | 100% (23/23) | 95,5% (21/22) | 78,3% (18/23) | ⚠️ C1+C2 đạt, C4 chưa | [`openai-deepseek.md`](eval/runs/openai-deepseek.md) |
 
-**Kết luận trung thực:** cả ba lượt đều ghi đủ case fail. Mock chạy từ wrapper của Hướng chứng minh luồng test hoạt động nhưng chưa đạt quality bar: sai nhiều nhất ở nhãn tầng (7/14 đúng) và còn 1 case nguồn fail; kết quả này được giữ nguyên để làm baseline, không sửa bar hoặc giấu case.
+**Kết luận trung thực:** cả bốn lượt đều ghi đủ case fail, không sửa bar hoặc giấu case. Ba lượt đầu (mock + gpt-4o-mini) giữ làm baseline. Lượt 4 là **model chạy thật của app sau CP5** — cần đọc kèm ba lưu ý:
+
+1. **Đổi runtime sang DeepSeek** vì chất lượng phán đoán phỏng vấn (không lạc đề, tự nhận vòng lặp, tìm đúng painpoint) vượt hẳn gpt-4o-mini. Golden set **vẫn giữ gpt-4o-mini** ở các lượt trước để so trước/sau đúng như spec chốt.
+2. **gpt-4o-mini KHÔNG tất định** kể cả `temperature=0`: chạy cùng một prompt nhiều lần lệch ±1–2 case/chiều (đã kiểm: C1 nhảy 64–71%). Nên **số 1-run không đáng tin** — hành vi bắt buộc chắc (luật cứng C2) được **ép bằng code** ở `normalize`/`engine`, không dựa prompt.
+3. **C4 trên DeepSeek chưa đạt là do trích thiếu/nhầm NGUỒN số** (vd gán "1 tuần" của người trả lời thành `ASSUMPTION`) — **ngược** với kiểu bịa số của gpt-4o-mini. Rubric C4 tune cho gpt-4o-mini nên bắt đúng điểm yếu khác của DeepSeek. Giữ nguyên số, không chỉnh rubric (R4 phạt).
 
 ---
 
@@ -447,6 +452,12 @@ Trục khác biệt đề xuất: **agent hỏi bao nhiêu câu một lượt** 
 | Trước CP1 | Điều kiện dừng đổi từ *"đủ 5 why"* → **`can_thiệp_được: true`** | Chain 3 tầng tới gốc tốt hơn chain 5 tầng cụt ở `điều_kiện`. Case thật: Ẩn danh 1 có đủ 4 why nhưng tầng cuối *"do môi trường"* không can thiệp được. |
 | ✅ sau CP5 | Prompt: Thêm ví dụ gợi ý khi câu trả lời < 10 chữ | Ẩn danh 1 & 3 bối rối không biết trả lời sao cho máy hiểu khi bị hỏi vặn lại. Thêm gợi ý giúp UX trơn tru hơn. |
 | ✅ sau CP5 | UX: Thêm nút "Thử viết lại" khi chạm case chưa tới gốc | Ẩn danh 5 bị kẹt và không biết thao tác gì tiếp theo khi agent báo chain chưa thể can thiệp được. |
+| ✅ sau CP5 | **Craft phỏng vấn:** bỏ khuôn "vì sao" máy móc → đa dạng câu hỏi (kể chuyện / tác động / tần suất); cấm hỏi "vì sao" lên sự thật trung tính ("đã dùng nửa tháng"); cho soi gương; dừng khi đủ hiểu (mặc định 4 tầng) thay vì đủ số; nhẹ tay khi người trả lời đuối | 5-why cơ khí gây khó chịu, và hỏi câu vô nghĩa làm người trả lời cạn lời. Phỏng vấn thật đa dạng mũi khoan, không tra hỏi một khuôn. |
+| ✅ sau CP5 | **Chặn bỏ cuộc sớm** (retry trong `engine`): stop ở tầng `trieu_chung` mà còn dư tầng → ép đào tiếp | gpt-4o-mini gán "chưa cancel subscription" là triệu chứng rồi dừng, bỏ lỡ painpoint thật ở tầng sau. Ép bằng code, không nhồi prompt. |
+| ✅ sau CP5 | **Chuyển runtime provider sang DeepSeek** (`deepseek-v4-flash`, OpenAI-compatible); golden set giữ gpt-4o-mini để so số | Chất lượng phán đoán phỏng vấn (không lạc đề, tự nhận vòng lặp, tìm đúng painpoint) vượt hẳn gpt-4o-mini. Xem §7 về khác biệt số liệu. |
+| ✅ sau CP5 | **Tương thích model thinking:** structured output đổi `json_schema` → `jsonMode`; forced `tool_choice` có degrade; `maxTokens` 2048→8192 | DeepSeek thinking trả 400 với `json_schema` + forced `tool_choice`, và cắt cụt JSON khi token reasoning tràn. Không vá thì khảo sát hỏng hẳn trên DeepSeek. |
+| ✅ sau CP5 | **Vệ sinh dữ liệu:** lọc số `text` rỗng + điền `claim` rỗng bằng lời người trả lời; prompt tổng hợp cấm bịa số cụ thể; guard bịa-mã tích luỹ tool output qua mọi lượt | `jsonMode` nới lỏng schema → model bỏ trống field → tong_hop đếm cả rác. Guard trước đó báo oan mã đã tra ở lượt trước. |
+| ✅ sau CP5 | Luật cứng "một câu hỏi" ép ở `normalize`, giữ câu MỞ ("thế nào") thay câu neo ("khi nào") | DeepSeek hay ghép 2 câu hỏi → phạm luật + rớt C2. Ép ở normalize để cả eval lẫn app đều vá; giữ câu mở vì đó mới là câu nhiều context. |
 
 ---
 
