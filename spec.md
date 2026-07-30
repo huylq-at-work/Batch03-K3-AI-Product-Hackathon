@@ -60,6 +60,8 @@ Tự kiểm theo guide §1.1 câu 2: bỏ AI đi, việc này còn tồn tại k
 
 Đề bài cho **"(A) khảo sát ≥20 người ngoài nhóm và/hoặc (B) mining data"**. Nhóm dùng **cả hai**, theo đúng guide §1.3: *"B chứng minh pain tồn tại, A chứng minh user muốn nó được giải"*. **B là trụ chính** vì nó đã đủ chuẩn; A đang thiếu người và dùng làm phần bổ trợ.
 
+**Người phụ trách Evidence & Impact:** **Nguyễn Chí Hướng — 2A202601203**. Phạm vi phụ trách: thu và rà log phỏng vấn, tách người trong/ngoài nhóm, giữ negative case, gom cụm nguyên nhân và cập nhật bảng impact tại §2. Hướng trực tiếp ghi 5 chuỗi phỏng vấn trong `Phỏng vấn.txt`; khi đối chiếu, Người 4 và Người 5 trùng với `Ẩn danh 1` và `Ẩn danh 2` đã có, nên chỉ bổ sung 3 người mới để không đếm trùng.
+
 ---
 
 #### Chuẩn B — mining `Danh_sach_de_tai.xlsx` *(trụ chính)*
@@ -94,7 +96,7 @@ Output đầy đủ: [`evidence/mining-de-tai.md`](evidence/mining-de-tai.md).
 
 #### Chuẩn A — khảo sát *(bổ trợ)*
 
-**n = 9 tổng, nhưng chỉ 5 người NGOÀI NHÓM.** Bốn người là thành viên nhóm (xem [`TEAMMATES.md`](TEAMMATES.md)) — ghi rõ ở đây thay vì gộp vào một tỷ lệ đẹp.
+**n = 12 tổng, trong đó 8 người NGOÀI NHÓM.** Bốn người là thành viên nhóm (xem [`TEAMMATES.md`](TEAMMATES.md)) — ghi rõ ở đây thay vì gộp vào một tỷ lệ đẹp. Ba người mới là phần không trùng trong 5 interview do Hướng thu; hai interview còn lại đã xuất hiện dưới tên `Ẩn danh 1` và `Ẩn danh 2`.
 
 | Người | Vai | Nguyên nhân gốc rút ra | Cụm | Ngoài nhóm? |
 |---|---|---|---|---|
@@ -107,22 +109,25 @@ Output đầy đủ: [`evidence/mining-de-tai.md`](evidence/mining-de-tai.md).
 | Minh | đi làm | collect data 2 tuần + research 1,5 tuần + phỏng vấn 5 người 3 ngày | B, C, D | ✅ |
 | Ẩn danh 1 | đi học | chưa đi làm, chưa tiếp xúc đủ *(chain cụt ở điều kiện)* | A | ✅ |
 | Ẩn danh 2 | đi học | không đặt mình vào vị trí người khác, không biết khảo sát thế nào | B | ✅ |
+| Ẩn danh 3 *(PV Hướng — Người 1)* | chưa ghi vai | trả lời “chưa gặp khó khăn”; các why sau nói lĩnh vực không phù hợp, mạng lưới hẹp và hướng nội | *(negative/không nhất quán — không ép vào cụm)* | ✅ |
+| Ẩn danh 4 *(PV Hướng — Người 2)* | chưa ghi vai | đề bài quá mở; chưa chủ động phỏng vấn, dùng GPT nhưng kết quả vẫn chủ quan | B, C | ✅ |
+| Mai Hồng Sơn *(PV Hướng — Người 3)* | 25 tuổi · Dev | khó tiếp cận đúng người đang có vấn đề vì không có nhiều mối quan hệ | B | ✅ |
 
-**Số liệu trung thực:** **4/5 người ngoài nhóm** xác nhận có friction (chỉ Vương không đau). Mẫu n=5 quá nhỏ để công bố tỷ lệ phần trăm — ghi dạng phân số. Tính cả trong nhóm thì 8/9.
+**Số liệu trung thực:** **6/8 người ngoài nhóm** xác nhận có friction. Vương là negative case rõ; Ẩn danh 3 được tính bảo thủ là chưa xác nhận vì câu mở đầu là *“Bản thân chưa gặp khó khăn gì”*, dù các why sau nêu rào cản. Mẫu n=8 vẫn nhỏ nên báo cáo dạng phân số thay vì chỉ nêu phần trăm. Tính cả trong nhóm thì **10/12 người** có friction.
 
 Bốn chain của thành viên nhóm **vẫn giữ** vì chúng là dữ liệu thật và có lỗi đã biết trước (dùng làm golden set §7) — chỉ **không tính vào n của chuẩn A**.
 
-> 🔲 **Chuẩn A chưa đủ 20 người ngoài nhóm.** Việc này KHÔNG còn chặn tiêu chí 2 vì chuẩn B đã đủ, nhưng thu thêm vẫn làm mạnh §2 (bảng impact) và cần cho R6. Xem [`phan-cong/4-evidence-validation.md`](phan-cong/4-evidence-validation.md).
+> 🔲 **Chuẩn A chưa đủ 20 người ngoài nhóm: hiện 8, còn thiếu 12.** Việc này KHÔNG còn chặn tiêu chí 2 vì chuẩn B đã đủ, nhưng thu thêm vẫn làm mạnh §2 (bảng impact) và cần cho R6. Xem [`phan-cong/4-evidence-validation.md`](phan-cong/4-evidence-validation.md).
 
-**Phân bố cụm** *(mẫu 8 người có pain, một người có thể thuộc nhiều cụm)*:
+**Phân bố cụm** *(mẫu 10 người có pain, một người có thể thuộc nhiều cụm)*:
 
 | Cụm | Nội dung | Số người |
 |---|---|---|
-| A | không có domain chứa pain | 2/8 · 25% |
-| **B** | **không moi được pain từ người khác** | **3/8 · 37,5%** |
-| C | không có tiêu chí "pain nào đáng làm" | 4/8 · 50% |
-| D | chi phí xác minh quá cao | 3/8 · 37,5% |
-| E | không có quy trình | 1/8 · 12,5% |
+| A | không có domain chứa pain | 2/10 |
+| **B** | **không moi được pain từ người khác** | **5/10** |
+| C | không có tiêu chí "pain nào đáng làm" | 5/10 |
+| D | chi phí xác minh quá cao | 3/10 |
+| E | không có quy trình | 1/10 |
 
 **≥5 quote nguyên văn:**
 
@@ -133,12 +138,15 @@ Bốn chain của thành viên nhóm **vẫn giữ** vì chúng là dữ liệu 
 5. Hướng — *"Painpoint có sẵn solution thì mất thời gian."* → *"Mất công, làm lại từ đầu."*
 6. Liên — *"Chưa quy đổi được giá trị thực sự."*
 7. Vương *(negative)* — *"Painpoint có từ trước đó → giải quyết trong 15'. Data thu thập nhanh → lấy trực tiếp từ data dữ liệu của doanh nghiệp."*
+8. Ẩn danh 4 — *"Chưa chủ động phỏng vấn, trao đổi bằng GPT nhưng chỉ là chủ quan."*
+9. Mai Hồng Sơn — *"Khó tiếp cận với người gặp vấn đề."* → *"Không có nhiều mối quan hệ."*
+10. Ẩn danh 3 *(negative/không nhất quán)* — *"Bản thân chưa gặp khó khăn gì."*
 
-**Phương pháp đếm** *(để người ngoài kiểm lại được)*: 9 chain, mỗi why gán tay vào 1–2 cụm A–E theo nội dung; đếm theo **số người** chứ không theo số why (một người nhiều why cùng cụm vẫn tính 1). Mẫu nhỏ nên mỗi người = 12,5 điểm phần trăm — báo cáo dạng **"x/8 người"**, không dùng % đơn lẻ.
+**Phương pháp đếm** *(để người ngoài kiểm lại được)*: đối chiếu 5 chain trong log của Hướng với 9 chain đã có; hai chain trùng nội dung được gộp, còn lại **12 người duy nhất**. Mỗi why được gán tay vào 1–2 cụm A–E; đếm theo **số người** chứ không theo số why (một người có nhiều why cùng cụm vẫn tính 1). Bảng cụm chỉ tính 10 người xác nhận có pain; Vương và Ẩn danh 3 được giữ làm negative/ambiguous case, không ép vào cụm để làm đẹp số.
 
-> 🔲 **CHẶN ĐƯỜNG — xử lý trước mọi việc khác.** Chuẩn A đòi **≥20 người ngoài nhóm**. Hiện n=9, và **chưa xác nhận ai trong 9 người là thành viên nhóm** — nếu có, n thật thấp hơn nữa. Cần thêm ≥11 người. Log đầy đủ (câu đã hỏi · từng câu trả lời nguyên văn · ai trả lời) lưu `evidence/survey-log.md`.
+> 🔲 **Phần còn thiếu của Hướng:** chuẩn hoá log vào `evidence/survey-log.md` và thu thêm **≥12 người ngoài nhóm**. Mỗi phiên phải có câu đã hỏi · từng câu trả lời nguyên văn · vai/người trả lời · đồng thuận sử dụng dữ liệu. Không suy ra vai hoặc câu trả lời còn thiếu từ ngữ cảnh.
 
-> 🔲 **Thiếu cột "hậu quả gì".** Tiêu chí 1 đòi *ai — đang làm gì — vướng đâu — **hậu quả gì***. Cả 9 chain hiện chỉ có chi phí (4 tuần), chưa có hệ quả. Thêm một câu vào mọi interview: *"Việc đó khiến bạn phải trả giá gì?"*
+> 🔲 **Thiếu cột "hậu quả gì".** Tiêu chí 1 đòi *ai — đang làm gì — vướng đâu — **hậu quả gì***. Cả 12 chain hiện chỉ có chi phí (4 tuần), chưa có hệ quả. Thêm một câu vào mọi interview: *"Việc đó khiến bạn phải trả giá gì?"*
 
 > 🔲 **Ẩn danh 1, Why 1 là suy luận của người phỏng vấn**, không phải lời người được hỏi (đã tự ngoặc đơn: *"Tôi assum là họ chưa biết phải làm gì"*). Hỏi lại để lấy lời nguyên văn, hoặc đánh dấu rõ là inference — không dùng làm bằng chứng.
 
@@ -148,24 +156,24 @@ Bốn chain của thành viên nhóm **vẫn giữ** vì chúng là dữ liệu 
 
 | # | Ứng viên | Bao nhiêu người | Tần suất | Tốn gì mỗi lần | Build nổi? | Chọn? |
 |---|---|---|---|---|---|---|
-| 1 | **Đào Gốc** — khảo sát 5-why thích ứng | 3/8 *(cụm B)* | mỗi lần đi phỏng vấn | 3 ngày / 5 người *(Minh)* | Cao — golden set có sẵn | ✅ **CHỌN** |
-| 2 | Máy sàng pain — verdict đủ/chưa đủ căn cứ | 4/8 *(cụm C)* | mỗi vòng chọn đề tài | 1–4 tuần *(Minh 4t, Trọng 1t)* | Cao | 🟨 dự phòng |
-| 3 | Khai thác pain từ môi trường đang sống | 2/8 *(cụm A)* | 1× đầu dự án | — | **Thấp** | ❌ loại |
-| 4 | Tài liệu hoá quy trình chung | 1/8 *(cụm E)* | 1× | — | Cao | ❌ loại |
+| 1 | **Đào Gốc** — khảo sát 5-why thích ứng | 5/10 *(cụm B)* | mỗi lần đi phỏng vấn | 3 ngày / 5 người *(Minh)* | Cao — golden set có sẵn | ✅ **CHỌN** |
+| 2 | Máy sàng pain — verdict đủ/chưa đủ căn cứ | 5/10 *(cụm C)* | mỗi vòng chọn đề tài | 1–4 tuần *(Minh 4t, Trọng 1t)* | Cao | 🟨 dự phòng |
+| 3 | Khai thác pain từ môi trường đang sống | 2/10 *(cụm A)* | 1× đầu dự án | — | **Thấp** | ❌ loại |
+| 4 | Tài liệu hoá quy trình chung | 1/10 *(cụm E)* | 1× | — | Cao | ❌ loại |
 
 ### Ứng viên ĐÃ LOẠI + vì sao
 
-- **#3 Khai thác pain từ môi trường** — cần dữ liệu cá nhân thật (nhật ký, chat, lịch) của người dùng, **vi phạm ràng buộc 3 của đề bài** (*"không data thật của người thật ngoài pack đã rà"*). Cộng thêm reach nhỏ nhất: 2/8.
-- **#4 Tài liệu hoá quy trình** — reach nhỏ nhất (1/8), và **không có quyết định AI trung tâm nào** để đặt vào lát cắt. Đây là bài toán nội dung/khoá học, không phải bài toán sản phẩm AI.
+- **#3 Khai thác pain từ môi trường** — cần dữ liệu cá nhân thật (nhật ký, chat, lịch) của người dùng, **vi phạm ràng buộc 3 của đề bài** (*"không data thật của người thật ngoài pack đã rà"*). Cộng thêm reach nhỏ nhất: 2/10.
+- **#4 Tài liệu hoá quy trình** — reach nhỏ nhất (1/10), và **không có quyết định AI trung tâm nào** để đặt vào lát cắt. Đây là bài toán nội dung/khoá học, không phải bài toán sản phẩm AI.
 - **Sửa ops** *(latency, cost tracking)* — đã cân nhắc và loại từ đầu: là bug engineering, không có quyết định AI.
 
 ### Ứng viên CHỌN + vì sao *(bằng số)*
 
-Cụm C có nhiều người hơn (4/8 vs 3/8). Vẫn chọn #1, ba lý do:
+Cụm B và C hiện cùng reach (5/10). Nhóm vẫn chọn #1, ba lý do:
 
 1. **#1 nằm thượng nguồn của #2.** Máy sàng cần một why-chain đã tới gốc để sàng. Không có chain thì sàng cái gì? Xây #2 trước #1 là xây mái trước móng.
 2. **#1 là stage duy nhất tạo ra bằng chứng mới từ ngoài đầu người dùng.** Bốn stage còn lại (phân tích đề tài · persona · AI leverage · MVP) đều chỉ suy luận trên input mà user đã tự gõ vào — nên không stage nào trong số đó chữa được Ẩn danh 2: *"chỉ bằng góc nhìn chủ quan"*.
-3. **Nhóm dogfood được ngay.** Nhóm vẫn cần ≥11 người nữa cho chuẩn A. Xây #1 → dùng chính nó thu phần bằng chứng còn thiếu. Sản phẩm tự sinh bằng chứng cho dự án về chính nó.
+3. **Nhóm dogfood được ngay.** Nhóm vẫn cần ≥12 người ngoài nhóm nữa cho chuẩn A. Xây #1 → dùng chính nó thu phần bằng chứng còn thiếu. Sản phẩm tự sinh bằng chứng cho dự án về chính nó.
 
 ---
 
@@ -377,7 +385,7 @@ Hai điều kiện 100% là **điều kiện cứng, không thoả hiệp**: m�
 
 | Phần | Người | Deliverable |
 |---|---|---|
-| Evidence → chuẩn A | 🔲 | `evidence/survey-log.md` · thu ≥11 người nữa |
+| Evidence & Impact → chuẩn A + §2 | **Nguyễn Chí Hướng — 2A202601203** | `evidence/survey-log.md` · chuẩn hoá 12 chain duy nhất · thu ≥12 người ngoài nhóm nữa · cập nhật bảng impact |
 | Spec | 🔲 | `spec.md` |
 | Prompt + golden set | 🔲 | `eval/golden-set.md` · prompt stage ★ |
 | Code flow | 🔲 | `codebase/` · `codebase/traces/` |
@@ -424,7 +432,7 @@ Trục khác biệt đề xuất: **agent hỏi bao nhiêu câu một lượt** 
 |---|---|---|---|
 | **R-1** | Hướng C mô tả là *"mining data"*, dự án này lấy bằng chứng từ khảo sát tự làm chứ không từ `data/vlearn-pack/` | 🔴 **Cao** | **Hỏi TA tại CP1.** Nếu buộc phải dùng data pack: hướng B *(Trợ lý Học viên — "tự tìm kiếm và quan sát trực tiếp trong Discord khoá")* cũng khớp, vì đề bài nói rõ hướng B **không có data pack riêng**. |
 | **R-2** | R4 đòi ≥10 case từ chatlog thật; golden set này dùng transcript phỏng vấn của nhóm | 🔴 **Cao** | Xin TA xác nhận quy đổi tại CP1. Có ≥10 khi thu đủ 20 người. |
-| **R-3** | n = 9 < 20 người ngoài nhóm; chưa xác nhận ai là thành viên nhóm | 🔴 **Cao** | Thu ≥11 người. Cả lớp là user thật — làm được trong giờ nghỉ. Chặn 6 điểm R1. |
-| **R-4** | Cả 9 chain thiếu ô `hậu_quả_gì` | 🟡 Trung bình | Thêm một câu vào mọi interview. Chặn 3 điểm R1. |
+| **R-3** | n = 12 tổng nhưng chỉ 8 người ngoài nhóm; chuẩn A cần ≥20 | 🟡 Trung bình | Hướng thu thêm ≥12 người ngoài nhóm và chuẩn hoá log. Chuẩn B đã đủ nên đây là bằng chứng bổ trợ, không còn chặn toàn bộ R1. |
+| **R-4** | Cả 12 chain thiếu ô `hậu_quả_gì` | 🟡 Trung bình | Thêm một câu vào mọi interview. Chặn 3 điểm R1. |
 | **R-5** | Bot phỏng vấn có thể làm **tăng** tỷ lệ từ chối — Ẩn danh 2 đã báo: *"có những người không đồng ý"* | 🟡 Trung bình | Test tại CP5 như một giả thuyết, không bỏ qua. Nếu đúng → thuộc đường đi failure §6. |
 | **R-6** | Người trả lời phải biết mình nói với AI; câu trả lời là dữ liệu người thật | 🟡 Trung bình | Xin đồng thuận, khai rõ là AI. Log giữ trong `validation/` + `evidence/`, chỉ commit quote ngắn, không dựng corpus. |
