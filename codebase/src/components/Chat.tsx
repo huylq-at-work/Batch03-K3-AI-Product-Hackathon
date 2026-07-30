@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { PaperPlaneIcon, ShuffleIcon } from '@radix-ui/react-icons';
+import { CheckCircledIcon, PaperPlaneIcon, ShuffleIcon } from '@radix-ui/react-icons';
 import { runTurn } from '../agent/engine';
 import { resolveProvider } from '../llm';
 import { newId, transcripts } from '../store/db';
@@ -24,6 +24,7 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
   const [busy, setBusy] = useState(false);
   const [stream, setStream] = useState(''); // next_question đang chạy chữ
   const [finished, setFinished] = useState(false);
+  const [endMode, setEndMode] = useState<TurnResult['mode'] | ''>('');
   const [error, setError] = useState('');
   const [violations, setViolations] = useState<string[]>([]);
 
@@ -58,7 +59,11 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
     if (result.node) setChain(nextChain);
 
     const out: Msg[] = [];
-    if (result.message) out.push({ role: 'system', text: result.message });
+    // message khi `stop` là ghi chú cho CHỦ khảo sát (vd "chain dừng ở trieu_chung,
+    // chưa tới nguyên nhân gốc") — không phải lời nói với người trả lời, nên không
+    // đẩy vào chat. Các mode khác (refuse/out_of_scope/kéo-về) thì message là lời
+    // dành cho người trả lời nên vẫn hiện. Lời cảm ơn kết thúc do thẻ hoàn tất lo.
+    if (result.message && result.mode !== 'stop') out.push({ role: 'system', text: result.message });
     if (result.next_question) {
       lastQuestion.current = result.next_question;
       out.push({ role: 'agent', text: result.next_question });
@@ -67,6 +72,7 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
 
     const done = result.mode === 'stop' || result.mode === 'refuse' || result.mode === 'out_of_scope';
     if (done) {
+      setEndMode(result.mode);
       setFinished(true);
       onDone?.();
     }
@@ -186,7 +192,21 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
         )}
 
         {finished ? (
-          <div className="notice">Phiên đã kết thúc. Cảm ơn bạn.</div>
+          <div className="notice ok done">
+            <CheckCircledIcon width={20} height={20} />
+            <div>
+              <b>
+                {endMode === 'out_of_scope'
+                  ? 'Khảo sát kết thúc'
+                  : 'Khảo sát đã hoàn tất — cảm ơn bạn! 🎉'}
+              </b>
+              <p className="muted small">
+                {endMode === 'out_of_scope'
+                  ? 'Cảm ơn bạn đã ghé. Bạn có thể đóng cửa sổ này.'
+                  : 'Những chia sẻ của bạn đã được ghi lại đầy đủ. Bạn có thể đóng cửa sổ này.'}
+              </p>
+            </div>
+          </div>
         ) : (
           <form
             className="composer"
