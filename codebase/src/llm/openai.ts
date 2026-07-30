@@ -75,7 +75,7 @@ export function createOpenAiProvider(
     toolChat: ({ system, tools, messages }) =>
       openAiToolChat(apiKey, model, baseUrl, system, tools, messages),
 
-    timWeb: (cauHoi) => openAiWebSearch(apiKey, model, baseUrl, cauHoi),
+    webSearch: (cauHoi) => openAiWebSearch(apiKey, model, baseUrl, cauHoi),
   };
 }
 

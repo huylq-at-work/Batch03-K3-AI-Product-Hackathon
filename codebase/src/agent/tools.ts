@@ -183,10 +183,21 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
       return xemDeTai(input.ma);
     }
 
-    case 'tim_web': {
+    case 'web_search': {
       const q = typeof input.cau_hoi === 'string' ? input.cau_hoi.trim() : '';
       if (!q) return { error: 'thieu_cau_hoi', message: 'Cần truyền cau_hoi cụ thể.' };
-      if (!hamTimWeb) {
+
+      // Cổng thứ tự — prompt không giữ được, nên chặn ở đây.
+      if (soLuotNguoiDung < LUOT_TOI_THIEU_WEB_SEARCH) {
+        return {
+          error: 'chua_den_luc_tra_web',
+          message:
+            `Chưa tra web được — mới ${soLuotNguoiDung} lượt trao đổi, chưa chốt painpoint. ` +
+            'Tra bây giờ chỉ ra kết quả chung chung. Quay lại đào 5-why đã; ' +
+            'ĐỪNG nói với người dùng về giải pháp hiện có hay công nghệ ở lượt này.',
+        };
+      }
+      if (!hamWebSearch) {
         return {
           error: 'khong_tra_web_duoc',
           message:
@@ -194,7 +205,7 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
             'được phần này, và đừng suy đoán thay. Gợi ý họ đặt VITE_LLM_PROVIDER=openai.',
         };
       }
-      return hamTimWeb(q);
+      return hamWebSearch(q);
     }
 
     // Tool GHI: không tự lưu ở đây. Trả bản nháp, UI cho người dùng xác nhận.
@@ -237,11 +248,18 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
  * "đã có ai làm chưa", "công nghệ nào đang dùng". Trước đây prompt phải cấm agent
  * phát biểu về những thứ đó. Có tool rồi thì cấm đổi thành **bắt buộc phải tra**.
  */
-export const TIM_WEB_TOOL = {
-  name: 'tim_web',
+export const WEB_SEARCH_TOOL = {
+  name: 'web_search',
   description:
-    'Tra web thật để nghiên cứu. Dùng khi cần biết: giải pháp hiện có cho vấn đề này, ' +
-    'ai đang làm, công nghệ/API nào phù hợp, hay số liệu về độ lớn vấn đề. ' +
+    'Tra web thật để nghiên cứu giải pháp hiện có, công nghệ/API phù hợp, hoặc số liệu ' +
+    'về độ lớn vấn đề. ' +
+    // ⚠️ Điều kiện gọi để ở ĐÂY chứ không chỉ trong system prompt: description là thứ
+    // model đọc lúc quyết định gọi tool. Bản trước chỉ ghi "đừng gọi ở bước 1-3" trong
+    // prompt và nó gọi ngay lượt 1.
+    'TIỀN ĐIỀU KIỆN: chỉ gọi SAU KHI đã chốt được painpoint qua 5-why (bước 5 và 6). ' +
+    'Ở bước 1-4 thì KHÔNG gọi — lúc đó chưa biết painpoint nên chưa biết tra cái gì, ' +
+    'và kết quả sẽ chung chung vô dụng trong khi vẫn mất ~9 giây. ' +
+    'Người dùng vừa nói tên đề tài KHÔNG phải lý do để gọi tool này. ' +
     'Đặt câu hỏi CỤ THỂ, không đặt từ khoá rời. ' +
     'Trả về error thì NÓI RÕ là chưa tra được — tuyệt đối không suy đoán thay.',
   input_schema: {
@@ -258,16 +276,48 @@ export const TIM_WEB_TOOL = {
 } as const;
 
 /**
- * Hàm tra web do provider cấp. Đặt qua `datHamTimWeb` để `runTool` khỏi phải biết
+ * Hàm tra web do provider cấp. Đặt qua `datHamWebSearch` để `runTool` khỏi phải biết
  * provider nào — tools.ts không import llm/, tránh vòng phụ thuộc.
  */
-let hamTimWeb: ((cauHoi: string) => Promise<unknown>) | null = null;
-export function datHamTimWeb(fn: ((cauHoi: string) => Promise<unknown>) | null): void {
-  hamTimWeb = fn;
+let hamWebSearch: ((cauHoi: string) => Promise<unknown>) | null = null;
+export function datHamWebSearch(fn: ((cauHoi: string) => Promise<unknown>) | null): void {
+  hamWebSearch = fn;
 }
 
-/** Tool của cố vấn: catalog (nếu không bị tắt) + tra web + tạo khảo sát. */
-export const ADVISOR_TOOLS = [...CATALOG_TOOLS, TIM_WEB_TOOL, TAO_KHAO_SAT_TOOL];
+/**
+ * Số lượt người dùng đã nói, do UI cập nhật trước mỗi vòng lặp.
+ *
+ * Dùng để cưỡng chế THỨ TỰ gọi tool. Cần vì prompt không làm được việc này: đã ghi
+ * tiền điều kiện cả trong `description` của tool lẫn trong system prompt, mà
+ * gpt-4o-mini vẫn gọi `web_search` ngay lượt 1 — nơi chưa biết painpoint là gì.
+ * Đếm lượt là ràng buộc xác định, không phải khớp mẫu.
+ */
+let soLuotNguoiDung = 0;
+export function datSoLuot(n: number): void {
+  soLuotNguoiDung = n;
+}
+
+/** Tra web sớm hơn mốc này thì kết quả chung chung mà vẫn mất ~9 giây mỗi lần. */
+const LUOT_TOI_THIEU_WEB_SEARCH = 4;
+
+/**
+ * Tool của cố vấn, thay đổi theo số lượt.
+ *
+ * `web_search` bị **ẩn hoàn toàn** trước lượt 4, không phải chỉ bị `runTool` từ chối.
+ * Lý do đo được: khi chỉ từ chối mà vẫn để tool trong danh sách, model gọi lại **5
+ * lần trong cùng một lượt** và cháy hết trần vòng lặp — 5 lượt gọi API vô ích. Nó
+ * đọc `{error}` là "thử lại đi", không phải "đừng gọi".
+ *
+ * Cùng bài học với cờ tắt catalog: ẩn tool là cách duy nhất chắc chắn model không
+ * gọi. `runTool` vẫn giữ kiểm tra như lớp thứ hai, cho lời gọi lọt từ history cũ.
+ */
+export function advisorTools(soLuot: number): readonly unknown[] {
+  const web = soLuot >= LUOT_TOI_THIEU_WEB_SEARCH ? [WEB_SEARCH_TOOL] : [];
+  return [...CATALOG_TOOLS, ...web, TAO_KHAO_SAT_TOOL];
+}
+
+/** Danh sách đầy đủ — dùng cho tài liệu và test, đừng truyền thẳng vào API. */
+export const ADVISOR_TOOLS = [...CATALOG_TOOLS, WEB_SEARCH_TOOL, TAO_KHAO_SAT_TOOL];
 
 /**
  * Prompt CỐ VẤN — agent chính, cái người dùng nói chuyện khi mở app.
@@ -297,7 +347,12 @@ Vấn đề bạn tồn tại để giải quyết: sinh viên hay nhận nhầm
 - **điều kiện** — hoàn cảnh **không ai làm gì được** ("vì tôi còn là sinh viên")
 - **nguyên nhân** — một hành động, một lựa chọn, **HOẶC MỘT CÁI ĐANG THIẾU mà bù vào thì vấn đề hết**. **Chỉ loại này mới can thiệp được.**
 
-Phép thử duy nhất: **"làm gì để câu này không còn đúng nữa?"** Trả lời được bằng một việc cụ thể → nguyên nhân, và **dừng đào**. Không có việc gì làm được → điều kiện. Chưa nói vì sao → triệu chứng, đào tiếp.
+Cách tự phân loại — **TỰ HỎI TRONG ĐẦU, TUYỆT ĐỐI KHÔNG GÕ CÂU NÀY CHO NGƯỜI DÙNG**: *"làm gì để câu này không còn đúng nữa?"*
+- Bạn tự trả lời được bằng một việc cụ thể → **nguyên nhân**, và **dừng đào**.
+- Không có việc gì làm được → **điều kiện**.
+- Câu chưa nói vì sao → **triệu chứng**, đào tiếp.
+
+⚠️ Đây là phép thử nội bộ của bạn, không phải câu hỏi phỏng vấn. **Đã có lần bạn gõ nguyên văn câu này cho người dùng** — họ không hiểu vì sao bị hỏi vậy, và bạn thì bỏ mất việc phải tự kết luận. Câu hỏi gửi người dùng luôn là dạng *"vì sao \<điều họ vừa nói\>?"*
 
 ⚠️ **Một sự VẮNG MẶT không tự động là điều kiện.** Đây là lỗi hay gặp nhất và nó làm cả cuộc tư vấn đi vào ngõ cụt. "Không có X", "chưa có X", "không ai làm X" — hỏi tiếp: *bù X vào thì vấn đề hết chưa?* Hết → **nguyên nhân**, vì chính việc bù X vào là giải pháp, và thường đó là cả sản phẩm họ cần làm.
 
@@ -313,22 +368,26 @@ Ví dụ: *"trường không có chỗ nào gom deadline các môn lại"* → *
 
 Tool trả bản nháp, **chưa có link**. Nói họ bấm "Tạo khảo sát". Đừng bịa link.
 
-**4. Tìm persona.** Từ những gì đã đào, chốt **ai** là người đau nhất vì painpoint này. Không phải "sinh viên" chung chung — phải nêu được: họ đang làm gì khi gặp vấn đề, họ đã thử cách nào, cách đó hỏng ở đâu. Nếu chưa đủ thông tin thì hỏi thêm, đừng tự điền.
+**4. Tìm persona.** Từ những gì đã đào, chốt **ai** là người đau nhất vì painpoint này. Không phải "sinh viên" chung chung — phải nêu được: họ đang làm gì khi gặp vấn đề, họ đã thử cách nào, cách đó hỏng ở đâu.
+
+⚠️ **Mỗi đặc điểm persona phải truy được về một nguồn**: lời người dùng vừa nói, hoặc kết quả tool. Không có nguồn thì **HỎI**, đừng điền.
+
+Cụ thể với **tên riêng** — tên sản phẩm, hệ thống, công ty, công nghệ (Canvas, Moodle, Notion, Teams…): chỉ được nhắc nếu **người dùng đã nói ra** hoặc **tool đã trả về**. Đã có lần bạn viết persona là *"sinh viên đang học trên Canvas LMS"* trong khi người dùng chưa hề nhắc Canvas — cả câu đó là bịa, và người dùng rất dễ tin vì nó nghe rất cụ thể. Không biết họ dùng hệ thống nào thì **hỏi họ**, hoặc viết *"hệ thống LMS của trường"*.
 
 **5. Xác định AI leverage.** Hỏi thẳng: **chỗ nào trong việc này CẦN AI, chỗ nào không?**
-- Gọi \`tim_web\` để xem đã có giải pháp nào cho vấn đề này chưa, và họ làm bằng cách gì.
+- **BẮT BUỘC gọi \`web_search\` TRƯỚC khi nói gì ở bước này.** Đây là lượt đầu tiên bạn được gọi nó, và không gọi thì cả bước 5 chỉ là suy đoán. Tra: đã có giải pháp nào cho vấn đề này chưa, họ làm bằng cách gì.
 - Việc nào chỉ cần CRUD, form, hay một truy vấn SQL thì **nói thẳng là không cần AI**. Đây là chỗ giá trị nhất bạn cho họ — nhiều đề tài dán chữ "AI Agent" lên một việc không cần AI.
 - AI chỉ đáng dùng khi: input là ngôn ngữ tự do, output cần phán đoán, và **sai thì sửa được**.
 
-**6. Brainstorm MVP.** Đề xuất **2–3 phương án**, mỗi phương án một câu, kèm chỗ khó nhất. Rồi nói rõ phương án nào nhỏ nhất mà vẫn kiểm chứng được painpoint. Gọi \`tim_web\` nếu cần biết công nghệ/API nào có sẵn. **Không tự chọn hộ họ** — nêu đánh đổi rồi để họ quyết.
+**6. Brainstorm MVP.** Đề xuất **2–3 phương án**, mỗi phương án một câu, kèm chỗ khó nhất. Rồi nói rõ phương án nào nhỏ nhất mà vẫn kiểm chứng được painpoint. Gọi \`web_search\` nếu cần biết công nghệ/API nào có sẵn. **Không tự chọn hộ họ** — nêu đánh đổi rồi để họ quyết.
 
-# Nghiên cứu — luật cho \`tim_web\`
+# Nghiên cứu — luật cho \`web_search\`
 
 Bạn **không có** kiến thức đáng tin về thị trường, đối thủ, hay công nghệ mới. Nên:
-- Muốn phát biểu về "đã có ai làm chưa", "công nghệ nào phù hợp", "vấn đề này lớn cỡ nào" → **phải gọi \`tim_web\` trước**.
+- Muốn phát biểu về "đã có ai làm chưa", "công nghệ nào phù hợp", "vấn đề này lớn cỡ nào" → **phải gọi \`web_search\` trước**.
 - Tool trả \`error\` → nói rõ **chưa tra được**, và đừng phát biểu. Nghiên cứu bịa tệ hơn không nghiên cứu.
 - Trích kết quả thì kèm nguồn tool trả về. Không có nguồn thì không phải bằng chứng.
-- **Đừng gọi \`tim_web\` ở bước 1–3.** Lúc đó chưa biết painpoint là gì nên chưa biết tra cái gì; tra sớm chỉ ra kết quả chung chung.
+- **Đừng gọi \`web_search\` ở bước 1–3.** Lúc đó chưa biết painpoint là gì nên chưa biết tra cái gì; tra sớm chỉ ra kết quả chung chung.
 
 # Luật cứng
 - **Chỉ nói về đề tài mà tool đã trả về.** Không có trong kết quả tool thì nói thẳng là không tra được. Tuyệt đối không mô tả đề tài từ suy đoán.
