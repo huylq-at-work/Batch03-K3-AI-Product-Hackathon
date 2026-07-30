@@ -40,10 +40,21 @@ export async function lcComplete(
   user: string,
   onToken?: (mau: string) => void,
 ): Promise<TurnResult> {
+  // method='jsonMode': response_format=json_object, KHÔNG dùng json_schema (DeepSeek
+  // 400 "response_format type unavailable") và KHÔNG ép tool_choice (model thinking
+  // như deepseek-v4-flash 400 "Thinking mode does not support this tool_choice").
+  // json_object là mẫu số chung: OpenAI, DeepSeek (kể cả thinking) đều hỗ trợ. Schema
+  // được truyền qua prompt + `normalize` ép bất biến, nên không cần json_schema.
   const structured = model.withStructuredOutput(TURN_SCHEMA as Record<string, unknown>, {
     name: 'turn',
+    method: 'jsonMode',
   });
-  const msgs = [new SystemMessage(system), new HumanMessage(user)];
+  // json_object BẮT BUỘC chữ "json" xuất hiện trong prompt (OpenAI & DeepSeek đều
+  // 400 nếu thiếu). Thêm chỉ thị định dạng ở cuối system cho mọi provider.
+  const systemJson =
+    `${system}\n\n# Định dạng đầu ra\nTrả về DUY NHẤT một đối tượng JSON hợp lệ với đúng ` +
+    'các trường: mode, next_question, node, numbers, message, chain_incomplete. Không kèm chữ nào ngoài JSON.';
+  const msgs = [new SystemMessage(systemJson), new HumanMessage(user)];
 
   if (!onToken) return normalize(await structured.invoke(msgs));
 
@@ -121,32 +132,47 @@ export async function lcToolChat(
   },
 ): Promise<{ text: string; calls: Calls }> {
   const { system, tools, messages, force, onToken } = args;
-
-  // bindTools nhận cả dạng {name, description, schema}; LangChain lo format cho SDK.
-  const bound = tools.length
-    ? model.bindTools!(
-        tools.map((t) => ({ name: t.name, description: t.description, schema: t.input_schema })),
-        force ? { tool_choice: force } : {},
-      )
-    : model;
-
   const lcMsgs = sangLc(system, messages);
 
-  if (onToken) {
-    const stream = await bound.stream(lcMsgs);
-    let gom: AIMessageChunk | undefined;
-    let text = '';
-    for await (const chunk of stream) {
-      gom = gom ? gom.concat(chunk) : chunk;
-      const mau = layText(chunk.content);
-      if (mau) {
-        text += mau;
-        onToken(mau);
-      }
-    }
-    return { text, calls: gom ? layCalls(gom) : [] };
-  }
+  // bindTools nhận cả dạng {name, description, schema}; LangChain lo format cho SDK.
+  // `dungForce` = có ép tool_choice không. Model thinking (deepseek-v4-flash) trả 400
+  // "Thinking mode does not support this tool_choice" khi ép → ta thử lại KHÔNG ép.
+  const build = (dungForce: boolean) =>
+    tools.length
+      ? model.bindTools!(
+          tools.map((t) => ({ name: t.name, description: t.description, schema: t.input_schema })),
+          dungForce && force ? { tool_choice: force } : {},
+        )
+      : model;
 
-  const res = (await bound.invoke(lcMsgs)) as AIMessage;
-  return { text: layText(res.content), calls: layCalls(res) };
+  const chay = async (dungForce: boolean) => {
+    const bound = build(dungForce);
+    if (onToken) {
+      const stream = await bound.stream(lcMsgs);
+      let gom: AIMessageChunk | undefined;
+      let text = '';
+      for await (const chunk of stream) {
+        gom = gom ? gom.concat(chunk) : chunk;
+        const mau = layText(chunk.content);
+        if (mau) {
+          text += mau;
+          onToken(mau);
+        }
+      }
+      return { text, calls: gom ? layCalls(gom) : [] };
+    }
+    const res = (await bound.invoke(lcMsgs)) as AIMessage;
+    return { text: layText(res.content), calls: layCalls(res) };
+  };
+
+  if (!force) return chay(false);
+  try {
+    return await chay(true);
+  } catch (e) {
+    // Model không nhận forced tool_choice (thinking model) → degrade: bỏ ép, để model
+    // tự chọn tool. Chỉ nuốt đúng lỗi tool_choice; lỗi khác thì ném tiếp.
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/tool_choice/i.test(msg)) return chay(false);
+    throw e;
+  }
 }
