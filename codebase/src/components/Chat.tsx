@@ -202,7 +202,15 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Trả lời…"
+              onKeyDown={(e) => {
+                // Enter gửi, Shift+Enter xuống dòng — giống chat chính. requestSubmit()
+                // đi qua onSubmit của form nên tái dùng luôn guard (!a || busy).
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
+              placeholder="Trả lời… (Enter gửi, Shift+Enter xuống dòng)"
               rows={3}
               disabled={busy}
             />
