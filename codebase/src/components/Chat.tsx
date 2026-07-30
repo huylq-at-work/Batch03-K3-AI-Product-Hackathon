@@ -78,6 +78,8 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
         chain,
         lastQuestion: lastQuestion.current,
         lastAnswer: answer,
+        // Câu trả lời trước → model tự thấy lạc đề lặp lại và tự huỷ nếu quá nhiều.
+        recentAnswers: turns.current.map((t) => t.a),
       });
       if (answer) turns.current = [...turns.current, { q: lastQuestion.current, a: answer, result }];
       apply(result, v);

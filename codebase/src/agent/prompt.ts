@@ -67,8 +67,9 @@ Câu trả lời dưới 10 từ, hoặc không xác định được ai đang l
 Người trả lời nói chuyện không liên quan chủ đề khảo sát (chuyện phiếm, câu hỏi vu vơ kiểu *"messi có phải goat không"*, spam, đùa) → **mode = ask**. KÉO HỌ VỀ: một câu ngắn nhẹ nhàng (không trả lời câu vu vơ đó), rồi hỏi lại đúng một câu về chủ đề khảo sát / lần gần nhất họ gặp vấn đề.
 - **KHÔNG dùng stop / refuse / out_of_scope cho câu lạc đề.** Ba mode đó KẾT THÚC phiên và mất phản hồi — như vậy khảo sát chả thu được gì. Lạc đề KHÔNG phải lý do kết thúc.
 - \`refuse\` CHỈ khi họ đòi BẠN làm một việc (chọn đề tài, viết spec, giải bài hộ). \`out_of_scope\` CHỈ khi họ rõ ràng không phải đối tượng (đã có sẵn vấn đề từ công việc + có dữ liệu ngay). Một câu hỏi vu vơ KHÔNG rơi vào hai loại này.
-- Chỉ khi họ lạc đề **3 lần liên tiếp** và không chịu vào chủ đề thì mới stop nhẹ nhàng.
 - Ví dụ kéo về: *"Câu đó mình xin phép không bàn nhé 😄 Quay lại chút — lần gần nhất bạn thấy khó theo kịp bài giảng là khi nào?"*
+
+**Huỷ phiên khi lạc đề quá nhiều (tự bảo vệ):** nhìn mục "Các câu trả lời trước trong phiên". Nếu người này **đã lạc đề khoảng 3 lần** (các câu trả lời trước cũng vu vơ/không liên quan) mà vẫn không vào chủ đề → họ không thực sự tham gia, tiếp tục cũng chả thu được gì. Lúc này **mode = out_of_scope**, đặt \`message\` lịch sự: *"Có vẻ mình chưa hỏi trúng điều bạn muốn nói, hoặc bạn đang bận — mình xin dừng khảo sát ở đây. Cảm ơn bạn đã ghé!"* Đừng gắt, đừng trách.
 
 # Khi họ đưa phỏng đoán thay vì trải nghiệm
 *"Chắc nhiều người cũng bị vậy"*, *"cái này ảnh hưởng cả nghìn người"* → ghi vào \`numbers\` với nguon = "ASSUMPTION", và ở lượt sau hỏi họ biết điều đó từ đâu.
@@ -86,10 +87,26 @@ export interface TurnInput {
   lastQuestion: string;
   /** Câu trả lời vừa nhận (rỗng ở lượt đầu — khi đó agent sinh câu mở đầu). */
   lastAnswer: string;
+  /**
+   * Các câu trả lời TRƯỚC ĐÓ trong phiên (không kể lastAnswer). Để model tự thấy
+   * người trả lời lạc đề lặp lại hay không — mỗi lượt vốn không có bộ nhớ, câu lạc
+   * đề không tạo node nên không nằm trong `chain`. Có lịch sử này thì model mới tự
+   * quyết được lúc nào nên huỷ phiên (không cần đếm bằng code).
+   */
+  recentAnswers?: string[];
 }
 
 export function buildUserPrompt(input: TurnInput): string {
-  const { agent, chain, lastQuestion, lastAnswer } = input;
+  const { agent, chain, lastQuestion, lastAnswer, recentAnswers = [] } = input;
+
+  // Lịch sử câu trả lời trước (tối đa 5 gần nhất) — để model tự nhận ra lạc đề lặp.
+  const lichSu =
+    recentAnswers.length === 0
+      ? ''
+      : `\n## Các câu trả lời trước trong phiên\n${recentAnswers
+          .slice(-5)
+          .map((a, i) => `${i + 1}. "${a}"`)
+          .join('\n')}\n`;
 
   const chainText =
     chain.length === 0
@@ -119,7 +136,7 @@ Số tầng tối đa: ${agent.maxTurns}
 
 ## Chain hiện có
 ${chainText}
-
+${lichSu}
 ## Lượt vừa rồi
 Bạn hỏi: "${lastQuestion}"
 Họ trả lời: "${lastAnswer}"
