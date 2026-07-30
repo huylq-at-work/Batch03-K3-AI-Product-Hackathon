@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { PaperPlaneIcon, ShuffleIcon } from '@radix-ui/react-icons';
 import { runTurn } from '../agent/engine';
 import { resolveProvider } from '../llm';
 import { newId, transcripts } from '../store/db';
+import { sinhBiDanh } from '../alias';
 import type { SubAgent, Transcript, TurnResult, WhyNode } from '../types';
 import { ChainView } from './ChainView';
 
@@ -108,11 +110,21 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
         </div>
         <label>
           Tên hoặc bí danh <span className="muted">(để trống = ẩn danh)</span>
-          <input
-            value={respondent}
-            onChange={(e) => setRespondent(e.target.value)}
-            placeholder="ẩn danh"
-          />
+          <div className="aliasRow">
+            <input
+              value={respondent}
+              onChange={(e) => setRespondent(e.target.value)}
+              placeholder="ẩn danh"
+            />
+            <button
+              type="button"
+              className="aliasBtn"
+              title="Tạo bí danh ngẫu nhiên"
+              onClick={() => setRespondent(sinhBiDanh())}
+            >
+              <ShuffleIcon /> Tạo bí danh
+            </button>
+          </div>
         </label>
         <button
           className="primary"
@@ -136,11 +148,15 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
       <div className="card chat">
         <div className="log">
           {msgs.map((m, i) => (
-            <div key={i} className={`msg ${m.role}`}>
-              {m.text}
+            <div key={i} className={m.role === 'user' ? 'row-user' : 'row-assistant'}>
+              <div className={`msg ${m.role}`}>{m.text}</div>
             </div>
           ))}
-          {busy && <div className="msg agent busy">đang nghĩ…</div>}
+          {busy && (
+            <div className="row-assistant">
+              <div className="msg agent busy">đang nghĩ…</div>
+            </div>
+          )}
           <div ref={bottom} />
         </div>
 
@@ -177,8 +193,12 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
               rows={3}
               disabled={busy}
             />
-            <button className="primary" disabled={busy || !input.trim()}>
-              Gửi
+            <button
+              className="primary iconbtn"
+              disabled={busy || !input.trim()}
+              aria-label="Gửi"
+            >
+              <PaperPlaneIcon />
             </button>
           </form>
         )}
