@@ -7,10 +7,10 @@
 ## Danh sách người tham gia test (Willing Users)
 
 1. Ẩn danh 1 (Sinh viên K3 VinUni)
-2. Ẩn danh 2 (Sinh viên K4 VinUni)
-3. Ẩn danh 3 (Người đi làm / Nhóm khác)
+2. Ẩn danh 2 (Sinh viên K3 VinUni)
+3. Ẩn danh 3 (Sinh viên K3 VinUni)
 4. Ẩn danh 4 (Sinh viên K3 VinUni)
-5. Ẩn danh 5 (Sinh viên K4 VinUni)
+5. Ẩn danh 5 (Sinh viên K3 VinUni)
 
 ---
 
