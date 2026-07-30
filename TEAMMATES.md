@@ -20,14 +20,15 @@ Khác Lab 04 (chia theo file code), hackathon này chia theo **khối rubric**. 
 chấm trên artifact và *"mỗi con điểm trỏ về một file"*, nên chia theo khối điểm thì mỗi
 người biết chính xác mình chịu trách nhiệm cho con điểm nào.
 
-**Toàn bộ phần code do Lê Quang Huy thực hiện.** Ba thành viên còn lại phụ trách các khối
-không phải code — và đó là **phần lớn hơn của rubric**: R1 (15đ) + R6 (8đ) + demo cộng lại
-nhiều điểm hơn R5 (8đ) của prototype.
+**Toàn bộ code prototype do Lê Quang Huy thực hiện.** Nguyễn Chí Hướng bổ sung test harness
+độc lập để kiểm tra bộ 23 testcase (`eval/Testcase/run.ts` + lệnh npm); phần này không thay
+đổi logic sản phẩm. Ba thành viên còn lại phụ trách Evidence, Validation và Demo — các khối
+R1 (15đ) + R6 (8đ) + demo cộng lại nhiều điểm hơn R5 (8đ) của prototype.
 
 | Thành viên | Vai trò | Khối rubric | Artifact sở hữu | Hướng dẫn |
 | :-- | :-- | :-- | :-- | :-- |
-| **Lê Quang Huy** | Dev & Spec — toàn bộ prototype | R2 15đ · R3 11đ · R4 15đ · R5 8đ = **49đ** | `codebase/**`, `eval/**`, `spec.md` §4–§7, `flow.html` | [P1](phan-cong/1-agent-core.md) · [P2](phan-cong/2-eval-provider.md) · [P3](phan-cong/3-ui-demo.md) |
-| **Nguyễn Chí Hướng** | Evidence Lead — bằng chứng & impact | R1 **15đ** | `evidence/survey-log.md`, `spec.md` §1–§2 | [P4](phan-cong/4-evidence-validation.md) |
+| **Lê Quang Huy** | Dev & Spec — toàn bộ prototype | R2 15đ · R3 11đ · R4 15đ · R5 8đ = **49đ** | `codebase/**`, `eval/golden-set.json`, `eval/runner.ts`, `eval/runs/openai-*`, `spec.md` §4–§7, `flow.html` | [P1](phan-cong/1-agent-core.md) · [P2](phan-cong/2-eval-provider.md) · [P3](phan-cong/3-ui-demo.md) |
+| **Nguyễn Chí Hướng** | Evidence Lead — bằng chứng, impact & testcase | R1 **15đ** + hỗ trợ R4 | `evidence/survey-log.md`, `spec.md` §1–§2, `eval/Testcase/**`, `eval/runs/mock-testcase.*` | [P4](phan-cong/4-evidence-validation.md) |
 | **Nguyễn Tiến Đạt** | Validation Lead — vòng test với user | R6 **8đ** | `validation/feedback-log.md`, `spec.md` §9 Changelog | [P4](phan-cong/4-evidence-validation.md) |
 | **Phạm Thị Liên** | Demo Lead — slide & dry run | vòng demo + R7 | `demo-slides.pdf`, `README.md` §thành viên | [P3](phan-cong/3-ui-demo.md) §slide |
 
@@ -40,10 +41,16 @@ nhiều điểm hơn R5 (8đ) của prototype.
 - Sửa 1 expect sai trong `eval/golden-set.json` (case `hiem-correction`), ghi vào §9.
 - Giữ `npm run typecheck` và `npm run build` sạch.
 
-**Nguyễn Chí Hướng — Evidence Lead** *(khối điểm lớn nhất, và chặn đường cả nhóm)*
-- 🔴 **Thu thêm ≥15 người ngoài nhóm.** Xem cảnh báo ở mục 5 — con số này lớn hơn mình
-  tưởng ban đầu.
-- 🔴 Thêm ô **`hậu_quả_gì`** cho mọi chain — cả 9 chain hiện tại đều thiếu. Một câu:
+**Nguyễn Chí Hướng — Evidence Lead & Testcase**
+- ✅ Viết tài liệu **23 testcase**, mỗi case có đầu vào và hành vi sản phẩm bắt buộc phải trả lời.
+- ✅ Phủ đủ 4 kiểu rủi ro: thiếu nguồn · mơ hồ · ngoài phạm vi · sai gây hậu quả; mỗi nhóm
+  trong JSON có 3 case, vượt yêu cầu tối thiểu 2.
+- ✅ Tạo `eval/Testcase/run.ts`, thêm lệnh `npm run test:testcase`; runner tự kiểm ≥20 case,
+  ≥2 case/nhóm và ID không trùng trước khi gọi bộ chấm chung.
+- ✅ Chạy đủ 23 case bằng mock và giữ nguyên cả case fail tại
+  `eval/runs/mock-testcase.md` + `.json`: C1 50,0% · C2 100% · C3 78,3% · C4 95,7%.
+- 🔴 **Thu thêm ≥12 người ngoài nhóm** để chuẩn A đạt 20 người ngoài nhóm.
+- 🔴 Thêm ô **`hậu_quả_gì`** cho mọi chain — cả 12 chain hiện tại đều thiếu. Một câu:
   *"Việc đó khiến bạn phải trả giá gì?"*
 - Hỏi về **lần gần nhất**, không hỏi ý kiến. *"Lần gần nhất bạn tìm đề tài, mất bao lâu?"*
   chứ không phải *"bạn có cần công cụ X không?"* — ai cũng trả lời có, dữ liệu vô dụng.
@@ -83,9 +90,12 @@ CP5 chọn **một thành viên ngẫu nhiên** và hỏi về **phần có tên
 hợp lệ: Huy bị hỏi về code, Hướng bị hỏi về evidence, Đạt về validation, Liên về demo.
 
 Nhưng nghĩa là:
-- **Huy** phải giải thích được toàn bộ `codebase/` và `eval/` — 49 điểm nằm ở đó.
-- **Hướng / Đạt / Liên** phải giải thích được phương pháp của mình: vì sao hỏi "lần gần
-  nhất" chứ không hỏi ý kiến · vì sao log nguyên văn mới tính là bằng chứng · vì sao
+- **Huy** phải giải thích được toàn bộ `codebase/`, golden set JSON, runner chung và các
+  lượt chạy AI thật — 49 điểm nằm ở đó.
+- **Hướng** phải giải thích thêm được vì sao bộ thử cần ≥20 case, vì sao 4 nhóm rủi ro
+  phải có ≥2 case và cách `npm run test:testcase` kiểm tra rồi chạy toàn bộ golden set.
+- **Hướng / Đạt / Liên** vẫn phải giải thích được phương pháp của mình: vì sao hỏi "lần
+  gần nhất" chứ không hỏi ý kiến · vì sao log nguyên văn mới tính là bằng chứng · vì sao
   không giấu số liệu chưa đạt.
 
 Không ai cần đọc code người khác. Nhưng ai cũng cần hiểu **vì sao** phần mình làm thế.
@@ -111,28 +121,30 @@ khác hoặc file không nên commit.
 Nếu push bị `! [rejected]`: có người push trước bạn. `git pull --rebase origin main` rồi
 push lại. **Đừng dùng `push --force`** — nó xoá commit của người khác.
 
-Chỉ Huy chạy được `npm run typecheck` / `build` / `eval`, nên trước khi Huy push code thì
-kiểm cả hai; ba người còn lại chỉ sửa `.md` nên không cần.
+Huy chịu trách nhiệm `npm run typecheck` / `build` / `eval` cho prototype. Hướng chịu trách
+nhiệm chạy `npm run test:testcase` và giải thích báo cáo mock; lệnh này dùng chung
+`eval/runner.ts` nên kết quả vẫn theo đúng bốn chiều của `spec.md` §7.
 
 ## 5. 🔴 Hai thứ chặn đường cả nhóm
 
-### 5.1 — n người ngoài nhóm thấp hơn tưởng: khoảng **5**, không phải 9
+### 5.1 — Chuẩn A hiện có **8 người ngoài nhóm**, còn thiếu 12
 
-Chuẩn A đòi **≥20 người NGOÀI NHÓM**. Khảo sát hiện có 9 người, nhưng đối chiếu với mục 1:
+Chuẩn A đòi **≥20 người NGOÀI NHÓM**. Sau khi Hướng đối chiếu 5 interview mới với 9 chain
+cũ và gộp 2 chain trùng, khảo sát có **12 người duy nhất**: 4 trong nhóm và 8 ngoài nhóm.
 
 | Người trong khảo sát | Vai khai trong khảo sát | Trong nhóm? |
 |---|---|---|
 | Hướng | SV năm 4 | ❌ **thành viên nhóm** |
 | Đạt | SV năm 4 | ❌ **thành viên nhóm** |
 | Liên | SV năm 3 | ❌ **thành viên nhóm** |
-| Huy | đi làm 3 năm | ❌ **thành viên nhóm** (cần xác nhận) |
-| Trọng · Vương · Minh · Ẩn danh 1 · Ẩn danh 2 | | ✅ ngoài nhóm |
+| Huy | đi làm 3 năm | ❌ **thành viên nhóm** |
+| Trọng · Vương · Minh · Ẩn danh 1 · Ẩn danh 2 · Ẩn danh 3 · Ẩn danh 4 · Mai Hồng Sơn | | ✅ ngoài nhóm |
 
-→ **n ngoài nhóm ≈ 5.** Trừ Vương (negative case, không đau) thì còn **4 người ngoài nhóm
-xác nhận có friction**, không phải 8.
+→ **n ngoài nhóm = 8.** Vương là negative case rõ; Ẩn danh 3 được tính bảo thủ là chưa
+xác nhận vì câu mở đầu nói chưa gặp khó khăn. Còn **6/8 người ngoài nhóm xác nhận friction**.
 
-**Cần thu thêm ~15 người, không phải 11.** Con số "8/9 = 88,9%" trong `spec.md` §1 phải
-tính lại theo n ngoài nhóm.
+**Cần thu thêm ≥12 người ngoài nhóm** để đạt chuẩn A. `spec.md` §1 báo cáo bằng phân số
+`6/8`, không dùng tỷ lệ gộp thành viên nhóm để làm số đẹp.
 
 Bốn chain của thành viên nhóm **vẫn giữ trong spec** — dùng làm bối cảnh và làm golden set
 (dữ liệu thật, có lỗi đã biết trước), chỉ **không tính vào n của chuẩn A**. Ghi rõ chỗ nào

@@ -1,8 +1,8 @@
-# AI SPEC — Đào Gốc: khảo sát 5-why thích ứng · Nhóm [XX] · Zone [X]
+# AI SPEC — Đào Gốc: khảo sát 5-why thích ứng · Nhóm [D305-A1] · Zone [X]
 
 **Đề tài:** Xây dựng agent AI khảo sát 5-why thích ứng giúp học viên xác định painpoint có căn cứ cho dự án
 
-Hướng: [ ] A — VLearn  [x] B — Trợ lý Học viên  [x] C — Làn mở
+Hướng: [ ] A — VLearn  [] B — Trợ lý Học viên  [x] C — Làn mở
 Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 
 > 🔲 **Chốt hướng tại CP1.** Mình đề xuất **C — Làn mở**. Xem rủi ro R-1 ở §10 trước khi tick: đề bài mô tả hướng C là *"mining data và đề xuất sản phẩm AI khác cho khoá"*, còn dự án này lấy bằng chứng từ khảo sát tự làm chứ không từ `data/vlearn-pack/`. **Hỏi TA tại CP1.**
@@ -23,7 +23,7 @@ Không phải "sinh viên nói chung". Ba thứ làm vai này cụ thể và **�
 
 > **Hai loại "đề tài" trong repo này — đừng lẫn.** `Danh_sach_de_tai.xlsx` là catalog **capstone**: 78,1% đề đòi deploy online, 63,9% đòi đăng nhập, 79,2% đòi ≥2 vai trò, max 2 team/đề. Còn `01-de-bai.md` của mini-hackathon nói rõ *"không yêu cầu deploy"*. **Đào Gốc là deliverable hackathon; người dùng của nó là sinh viên đang chọn đề capstone.** Persona ở trên nói về loại thứ hai.
 
-Trục phân loại trong/ngoài đối tượng rút ra từ khảo sát (Evidence chuẩn A), không phải giả định trước: 9 người tự tách làm hai nhóm theo việc **pain và bằng chứng có đến kèm sẵn trong môi trường họ đang sống hay không**.
+Trục phân loại trong/ngoài đối tượng rút ra từ khảo sát (Evidence chuẩn A), không phải giả định trước: 12 người tự tách làm hai nhóm theo việc **pain và bằng chứng có đến kèm sẵn trong môi trường họ đang sống hay không**.
 
 | | Trong đối tượng | Ngoài đối tượng |
 |---|---|---|
@@ -340,7 +340,18 @@ Tất cả **nhị phân**, để hai người ngoài nhóm chấm độc lập 
 
 🔲 *Guide §2.6 bước 4: hai thành viên chấm độc lập 5 output rồi so. Lệch = định nghĩa mơ hồ → viết lại trước 23:59 N1.*
 
-### Golden set — 23 case, file `eval/golden-set.md`
+### Golden set — 23 case
+
+**Artifact:** dữ liệu máy đọc tại [`eval/golden-set.json`](eval/golden-set.json) · mô tả từng đầu vào/kết quả bắt buộc tại [`eval/Testcase/README.md`](eval/Testcase/README.md) · runner tại [`eval/Testcase/run.ts`](eval/Testcase/run.ts).
+
+**Nguyễn Chí Hướng** đã chuẩn hoá bộ thử thành 23 testcase đọc được cho người chấm và chạy được bằng lệnh:
+
+```powershell
+cd codebase
+npm run test:testcase
+```
+
+Runner tự chặn nếu tổng số case dưới 20, một trong bốn nhóm rủi ro có dưới 2 case hoặc ID bị trùng. Bộ hiện tại có đủ **4 kiểu**, mỗi kiểu **3 case** trong JSON: thiếu nguồn sự thật · mơ hồ/thiếu ngữ cảnh · ngoài phạm vi · lỗi đặc thù domain có hậu quả.
 
 | Nhóm | Số case | Nội dung |
 |---|---|---|
@@ -371,31 +382,33 @@ Hai điều kiện 100% là **điều kiện cứng, không thoả hiệp**: m�
 
 | Lượt | Thời điểm | Chiều 1 (%) | Chiều 2 | Chiều 3 | Chiều 4 | Đối chiếu bar | Ghi chú |
 |---|---|---|---|---|---|---|---|
-| 1 | 🔲 trước CP3 16:00 N1 | | | | | | |
-| 2 | 🔲 | | | | | | |
-| 3 | 🔲 trước CP6 | | | | | | |
+| 1 | 30/07 · mock baseline | 50,0% (7/14) | 100% (23/23) | 77,3% (17/22) | 95,7% (22/23) | ❌ Chưa đạt | [`mock-baseline.md`](eval/runs/mock-baseline.md) |
+| 2 | 30/07 · OpenAI gpt-4o-mini lần 2 | 57,1% (8/14) | 100% (23/23) | 72,7% (16/22) | 100% (23/23) | ❌ Chưa đạt | [`openai-gpt4omini-lan2.md`](eval/runs/openai-gpt4omini-lan2.md) |
+| 3 | 30/07 · Hướng chạy `test:testcase` | 50,0% (7/14) | 100% (23/23) | 78,3% (18/23) | 95,7% (22/23) | ❌ Chưa đạt | [`mock-testcase.md`](eval/runs/mock-testcase.md) · cấu trúc 23 case/4 kiểu đạt |
 
-🔲 *Ghi đủ mọi case kể cả fail. Không đạt bar mà phân tích được nguyên nhân vẫn tính đủ điểm; số liệu bị chỉnh sửa thì không.*
+**Kết luận trung thực:** cả ba lượt đều ghi đủ case fail. Mock chạy từ wrapper của Hướng chứng minh luồng test hoạt động nhưng chưa đạt quality bar: sai nhiều nhất ở nhãn tầng (7/14 đúng) và còn 1 case nguồn fail; kết quả này được giữ nguyên để làm baseline, không sửa bar hoặc giấu case.
 
 ---
 
 ## §8. Phân công & kế hoạch
 
-🔲 **Điền tên thật — R7 cho 1 điểm cho việc này, và CP5 kiểm ngẫu nhiên (vibe-coding rule).**
+✅ **Đã điền tên thật và deliverable — CP5 có thể kiểm ngẫu nhiên theo vibe-coding rule.**
 
 | Phần | Người | Deliverable |
 |---|---|---|
 | Evidence & Impact → chuẩn A + §2 | **Nguyễn Chí Hướng — 2A202601203** | `evidence/survey-log.md` · chuẩn hoá 12 chain duy nhất · thu ≥12 người ngoài nhóm nữa · cập nhật bảng impact |
-| Spec | 🔲 | `spec.md` |
-| Prompt + golden set | 🔲 | `eval/golden-set.md` · prompt stage ★ |
-| Code flow | 🔲 | `codebase/` · `codebase/traces/` |
-| Demo + validation | 🔲 | `demo-slides.pdf` · `validation/feedback-log.md` |
+| Bộ testcase chạy được | **Nguyễn Chí Hướng — 2A202601203** | `eval/Testcase/README.md` · `eval/Testcase/run.ts` · `npm run test:testcase` · `eval/runs/mock-testcase.*` |
+| Spec | **Lê Quang Huy — 2A202601821** | `spec.md` |
+| Prompt + golden set JSON | **Lê Quang Huy — 2A202601821** | `eval/golden-set.json` · `eval/runner.ts` · prompt stage ★ |
+| Code flow | **Lê Quang Huy — 2A202601821** | `codebase/` · `codebase/traces/` |
+| Demo | **Phạm Thị Liên — 2A202601795** | `demo-slides.pdf` · dry run |
+| Validation | **Nguyễn Tiến Đạt — 2A202601387** | `validation/feedback-log.md` · `spec.md` §9 |
 
 ### Willing users *(≥3 tên — CP1 đòi khai)*
 
 ✅ 1. Ẩn danh 1 (SV K3) 2. Ẩn danh 2 (SV K3) 3. Ẩn danh 3 (SV K3)
 
-*Nguồn sẵn có: 9 người đã phỏng vấn. Xin ngay 3 người trong số đó đồng ý thử prototype.*
+*Nguồn sẵn có: 12 người duy nhất đã phỏng vấn; 3 willing users ngoài nhóm đã đồng ý thử prototype.*
 
 ### Kế hoạch validation CP5
 
