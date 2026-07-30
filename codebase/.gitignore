@@ -1,7 +1,22 @@
 node_modules/
+*.log
+traces/
+
+# ⚠️ MỌI output build, không chỉ `dist/`. Vite nhúng VITE_* vào bundle, nên thư
+# mục build chứa CẢ passphrase (dạng chuỗi thô) LẪN ciphertext catalog — commit
+# một lần là lộ hết 360 đề tài. `dist-test/`, `dist2/`, `build/` đều phải chặn.
 dist/
+dist*/
+build/
+
 .env
 .env.local
 .env.*.local
-*.log
-traces/
+
+# Catalog đề tài ở dạng PLAINTEXT — không bao giờ commit.
+# Repo chỉ chứa `de-tai.enc.json` (AES-256-GCM).
+# Sinh lại: python evidence/xlsx-to-json.py <xlsx>
+#           DE_TAI_KEY=<pass> node evidence/encrypt-de-tai.mjs
+src/data/de-tai.json
+src/data/de-tai-*.json
+!src/data/de-tai.enc.json

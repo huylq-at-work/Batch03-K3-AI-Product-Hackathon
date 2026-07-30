@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "eval": "tsx ../eval/runner.ts"
+    "eval": "tsx ../eval/runner.ts",
+    "audit": "node ../evidence/audit-khong-lo-data.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

@@ -3,6 +3,7 @@ import { createGeminiProvider } from './gemini';
 import { createOpenAiProvider } from './openai';
 import { createMockProvider } from './mock';
 import type { LlmProvider } from './provider';
+import { bien } from '../env';
 
 export * from './provider';
 
@@ -24,31 +25,41 @@ export const DEFAULT_MODEL: Record<ProviderName, string> = {
  * KHÔNG hardcode key vào đây. Đặt trong `.env.local` (đã .gitignore).
  */
 export function resolveProvider(name?: string): LlmProvider {
-  const which = (name ?? import.meta.env.VITE_LLM_PROVIDER ?? 'mock').toLowerCase();
+  // ⚠️ PHẢI qua `bien()`, đừng đọc thẳng import.meta.env.
+  //
+  // `.env.example` ship các dòng để trống (`VITE_OPENAI_BASE_URL=`), nên giá trị
+  // là chuỗi RỖNG chứ không phải undefined. Bản trước viết
+  //     import.meta.env.VITE_OPENAI_BASE_URL ?? undefined
+  // và `??` KHÔNG bắt chuỗi rỗng → baseUrl = '' → default parameter
+  // 'https://api.openai.com/v1' không bao giờ áp dụng → fetch('/chat/completions')
+  // gọi vào chính Vite dev server → 404 với body rỗng.
+  //
+  // Lỗi này không lộ ra ở eval/runner.ts vì nó dùng `|| undefined`. Chạy được ở
+  // Node mà chết ở browser đúng là dấu hiệu của loại bug này.
+  //
+  // `bien()` coi chuỗi rỗng là "không có", nên default parameter hoạt động lại.
+  const which = (name ?? bien('LLM_PROVIDER') ?? 'mock').toLowerCase();
 
   if (which === 'anthropic') {
-    const key = import.meta.env.VITE_ANTHROPIC_API_KEY;
+    const key = bien('ANTHROPIC_API_KEY');
     if (!key) return createMockProvider();
-    return createAnthropicProvider(
-      key,
-      import.meta.env.VITE_ANTHROPIC_MODEL ?? DEFAULT_MODEL.anthropic,
-    );
+    return createAnthropicProvider(key, bien('ANTHROPIC_MODEL') ?? DEFAULT_MODEL.anthropic);
   }
 
   if (which === 'openai') {
-    const key = import.meta.env.VITE_OPENAI_API_KEY;
+    const key = bien('OPENAI_API_KEY');
     if (!key) return createMockProvider();
     return createOpenAiProvider(
       key,
-      import.meta.env.VITE_OPENAI_MODEL ?? DEFAULT_MODEL.openai,
-      import.meta.env.VITE_OPENAI_BASE_URL ?? undefined,
+      bien('OPENAI_MODEL') ?? DEFAULT_MODEL.openai,
+      bien('OPENAI_BASE_URL'),
     );
   }
 
   if (which === 'gemini') {
-    const key = import.meta.env.VITE_GEMINI_API_KEY;
+    const key = bien('GEMINI_API_KEY');
     if (!key) return createMockProvider();
-    return createGeminiProvider(key, import.meta.env.VITE_GEMINI_MODEL ?? DEFAULT_MODEL.gemini);
+    return createGeminiProvider(key, bien('GEMINI_MODEL') ?? DEFAULT_MODEL.gemini);
   }
 
   return createMockProvider();

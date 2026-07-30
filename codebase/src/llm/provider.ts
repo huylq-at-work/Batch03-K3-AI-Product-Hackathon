@@ -1,11 +1,24 @@
 import type { TurnResult } from '../types';
 
+import type { ToolChatFn } from '../agent/tool-loop';
+
 export interface LlmProvider {
   /** Tên hiện trên UI + ghi vào trace. */
   readonly label: string;
   /** true nếu là lời gọi AI THẬT (R5 đòi khai rõ phần nào mock). */
   readonly isReal: boolean;
+  /** Stage ★ — quyết định AI trung tâm. Không có tool, output ràng buộc schema. */
   complete(system: string, user: string): Promise<TurnResult>;
+  /**
+   * Một lượt hội thoại CÓ TOOL, dùng cho cố vấn (tra catalog + tạo khảo sát).
+   *
+   * `undefined` = provider không hỗ trợ tool (mock, gemini) → cố vấn chạy ở chế độ
+   * không tool: vẫn tư vấn được, chỉ không tra được đề tài và không tự tạo khảo sát.
+   *
+   * Kiểu TRUNG LẬP, không theo SDK nào. Bản trước khai `Anthropic.MessageParam[]`
+   * nên chỉ Anthropic dùng được — có key OpenAI mà tính năng chính không chạy.
+   */
+  toolChat?: ToolChatFn;
 }
 
 /** Bản ghi mỗi lời gọi AI — R5: "log/trace trong repo". */

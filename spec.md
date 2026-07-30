@@ -13,9 +13,17 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 
 ### Job executor
 
-**Học viên khoá AI Thực Chiến chưa có domain nghề để lấy pain và data sẵn.**
+**Sinh viên VinUni khoá 3 & khoá 4 đang phải chọn một trong 360 đề tài capstone và tìm painpoint thật bên trong đề tài đó.**
 
-Không phải "sinh viên nói chung". Trục phân loại này rút ra từ chính khảo sát (§1 Evidence), không phải giả định trước: 9 người khảo sát tự tách làm hai nhóm theo việc **pain và bằng chứng có đến kèm sẵn trong môi trường họ đang sống hay không**.
+Không phải "sinh viên nói chung". Ba thứ làm vai này cụ thể và **đếm được**:
+
+1. **Dân số có biên rõ** — K3 + K4, và họ đều nhận cùng một file `Danh_sach_de_tai.xlsx`.
+2. **Artifact gây pain tồn tại và đo được** — 360 đề tài, 21 khối, **8,0 giờ đọc** nếu đọc hết; chỉ **4,7%** đề tài nêu số liệu định lượng (chi tiết: Evidence chuẩn B bên dưới). Không phải "sinh viên thấy bất tiện".
+3. **Job có mốc bắt đầu và kết thúc** — bắt đầu khi nhận file, kết thúc khi chốt được một `Mã Đề` **và** nói được pain thật bên trong nó là gì.
+
+> **Hai loại "đề tài" trong repo này — đừng lẫn.** `Danh_sach_de_tai.xlsx` là catalog **capstone**: 78,1% đề đòi deploy online, 63,9% đòi đăng nhập, 79,2% đòi ≥2 vai trò, max 2 team/đề. Còn `01-de-bai.md` của mini-hackathon nói rõ *"không yêu cầu deploy"*. **Đào Gốc là deliverable hackathon; người dùng của nó là sinh viên đang chọn đề capstone.** Persona ở trên nói về loại thứ hai.
+
+Trục phân loại trong/ngoài đối tượng rút ra từ khảo sát (Evidence chuẩn A), không phải giả định trước: 9 người tự tách làm hai nhóm theo việc **pain và bằng chứng có đến kèm sẵn trong môi trường họ đang sống hay không**.
 
 | | Trong đối tượng | Ngoài đối tượng |
 |---|---|---|
@@ -50,21 +58,61 @@ Tự kiểm theo guide §1.1 câu 2: bỏ AI đi, việc này còn tồn tại k
 
 ### Evidence
 
-**Chuẩn A — khảo sát.** Hiện có **n = 9**, mỗi người một chain 5-why.
+Đề bài cho **"(A) khảo sát ≥20 người ngoài nhóm và/hoặc (B) mining data"**. Nhóm dùng **cả hai**, theo đúng guide §1.3: *"B chứng minh pain tồn tại, A chứng minh user muốn nó được giải"*. **B là trụ chính** vì nó đã đủ chuẩn; A đang thiếu người và dùng làm phần bổ trợ.
 
-| Người | Vai | Nguyên nhân gốc rút ra | Cụm |
-|---|---|---|---|
-| Hướng | SV năm 4 | không nắm được quy trình chung nên phải start từ đầu | C, D, E |
-| Đạt | SV năm 4 | ít kinh nghiệm, ít data → không nhìn nhận được vấn đề thực sự | A, B |
-| Liên | SV năm 3 | chưa quy đổi được giá trị thực sự của vấn đề | C |
-| Trọng | đi làm | collecting data mất 1 tuần | D |
-| **Vương** | đi làm | **không đau** — pain có sẵn, data lấy trong 15' | *(negative case)* |
-| Huy | đi làm 3 năm | quá nhiều thông tin, không biết cái nào phù hợp với mình | C |
-| Minh | đi làm | collect data 2 tuần + research 1,5 tuần + phỏng vấn 5 người 3 ngày | B, C, D |
-| Ẩn danh 1 | đi học | chưa đi làm, chưa tiếp xúc đủ *(chain cụt ở điều kiện)* | A |
-| Ẩn danh 2 | đi học | không đặt mình vào vị trí người khác, không biết khảo sát thế nào | B |
+---
 
-**Số liệu:** 8/9 = **88,9% xác nhận có friction** (chỉ Vương không đau). Vượt mốc ≥50% của chuẩn A.
+#### Chuẩn B — mining `Danh_sach_de_tai.xlsx` *(trụ chính)*
+
+Artifact gây pain: catalog 360 đề tài capstone mà mọi sinh viên K3/K4 đều nhận.
+Phương pháp đếm kiểm lại được: [`evidence/mine-de-tai.py`](evidence/mine-de-tai.py) — chạy lại ra cùng số.
+Output đầy đủ: [`evidence/mining-de-tai.md`](evidence/mining-de-tai.md).
+
+| Số đếm được | Giá trị |
+|---|---|
+| Tổng đề tài · số khối | **360** · 21 |
+| Chữ phải đọc để chọn (4 cột nội dung) | **525.568 ký tự ≈ 95.558 từ ≈ 8,0 giờ** đọc liên tục @200 từ/phút |
+| Chỉ riêng cột *Mô Tả Bài Toán* | 254.767 ký tự ≈ **3,9 giờ** |
+| Mỗi đề tài | median **1.424 ký tự** (min 1.000 · max 2.387) |
+| Đề tài **có nêu số liệu định lượng** | **17/360 = 4,7%** |
+| Đề tài có nêu mục tiêu/yêu cầu rõ | 69/360 = 19,2% |
+| Tên bắt đầu `AI Agent` + động từ (khó phân biệt) | **135/360 = 37,5%** |
+| Max team | **2** cho mọi đề → 720 slot toàn khoá |
+
+**Bốn con số này khớp thẳng vào bốn chain của chuẩn A** — đây là chỗ B và A gặp nhau:
+
+| Người nói (chuẩn A) | Số chứng minh (chuẩn B) |
+|---|---|
+| Huy: *"Quá nhiều thông tin lười đọc. Không biết cái nào phù hợp với mình."* | 8,0 giờ đọc · 360 lựa chọn · 135 tên na ná nhau |
+| Liên: *"Chưa quy đổi được giá trị thực sự."* | **95,3% đề tài không có con số nào** về độ lớn vấn đề → không có gì để quy đổi |
+| Hướng: *"Chưa tìm thấy đề tài nào đủ wow."* | 80,8% mô tả không nêu mục tiêu rõ |
+| Đạt: *"Bí ý tưởng."* | Không phải bí — 360 lựa chọn mà không lọc được |
+
+**≥5 ví dụ nguyên văn:** xem `evidence/mining-de-tai.md` §5 (EDU-01, EDU-02, AIP-01, AIP-02, VSOC-01).
+
+---
+
+#### Chuẩn A — khảo sát *(bổ trợ)*
+
+**n = 9 tổng, nhưng chỉ 5 người NGOÀI NHÓM.** Bốn người là thành viên nhóm (xem [`TEAMMATES.md`](TEAMMATES.md)) — ghi rõ ở đây thay vì gộp vào một tỷ lệ đẹp.
+
+| Người | Vai | Nguyên nhân gốc rút ra | Cụm | Ngoài nhóm? |
+|---|---|---|---|---|
+| Hướng | SV năm 4 | không nắm được quy trình chung nên phải start từ đầu | C, D, E | ❌ thành viên nhóm |
+| Đạt | SV năm 4 | ít kinh nghiệm, ít data → không nhìn nhận được vấn đề thực sự | A, B | ❌ thành viên nhóm |
+| Liên | SV năm 3 | chưa quy đổi được giá trị thực sự của vấn đề | C | ❌ thành viên nhóm |
+| Huy | đi làm 3 năm | quá nhiều thông tin, không biết cái nào phù hợp với mình | C | ❌ thành viên nhóm |
+| Trọng | đi làm | collecting data mất 1 tuần | D | ✅ |
+| **Vương** | đi làm | **không đau** — pain có sẵn, data lấy trong 15' | *(negative)* | ✅ |
+| Minh | đi làm | collect data 2 tuần + research 1,5 tuần + phỏng vấn 5 người 3 ngày | B, C, D | ✅ |
+| Ẩn danh 1 | đi học | chưa đi làm, chưa tiếp xúc đủ *(chain cụt ở điều kiện)* | A | ✅ |
+| Ẩn danh 2 | đi học | không đặt mình vào vị trí người khác, không biết khảo sát thế nào | B | ✅ |
+
+**Số liệu trung thực:** **4/5 người ngoài nhóm** xác nhận có friction (chỉ Vương không đau). Mẫu n=5 quá nhỏ để công bố tỷ lệ phần trăm — ghi dạng phân số. Tính cả trong nhóm thì 8/9.
+
+Bốn chain của thành viên nhóm **vẫn giữ** vì chúng là dữ liệu thật và có lỗi đã biết trước (dùng làm golden set §7) — chỉ **không tính vào n của chuẩn A**.
+
+> 🔲 **Chuẩn A chưa đủ 20 người ngoài nhóm.** Việc này KHÔNG còn chặn tiêu chí 2 vì chuẩn B đã đủ, nhưng thu thêm vẫn làm mạnh §2 (bảng impact) và cần cho R6. Xem [`phan-cong/4-evidence-validation.md`](phan-cong/4-evidence-validation.md).
 
 **Phân bố cụm** *(mẫu 8 người có pain, một người có thể thuộc nhiều cụm)*:
 
