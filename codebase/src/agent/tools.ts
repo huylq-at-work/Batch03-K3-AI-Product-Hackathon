@@ -186,17 +186,8 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
     case 'web_search': {
       const q = typeof input.cau_hoi === 'string' ? input.cau_hoi.trim() : '';
       if (!q) return { error: 'thieu_cau_hoi', message: 'Cần truyền cau_hoi cụ thể.' };
-
-      // Cổng thứ tự — prompt không giữ được, nên chặn ở đây.
-      if (soLuotNguoiDung < LUOT_TOI_THIEU_WEB_SEARCH) {
-        return {
-          error: 'chua_den_luc_tra_web',
-          message:
-            `Chưa tra web được — mới ${soLuotNguoiDung} lượt trao đổi, chưa chốt painpoint. ` +
-            'Tra bây giờ chỉ ra kết quả chung chung. Quay lại đào 5-why đã; ' +
-            'ĐỪNG nói với người dùng về giải pháp hiện có hay công nghệ ở lượt này.',
-        };
-      }
+      // Thứ tự gọi được cưỡng chế bằng ẨN TOOL (advisorTools), không kiểm ở đây —
+      // xem chú thích tại LUOT_TOI_THIEU_WEB_SEARCH.
       if (!hamWebSearch) {
         return {
           error: 'khong_tra_web_duoc',
@@ -253,6 +244,10 @@ export const WEB_SEARCH_TOOL = {
   description:
     'Tra web thật để nghiên cứu giải pháp hiện có, công nghệ/API phù hợp, hoặc số liệu ' +
     'về độ lớn vấn đề. ' +
+    // Chạy thật: người dùng hỏi "mã đề 18 thì sao" và model đem đi TRA WEB, trả về
+    // link Studocu vô nghĩa — catalog là dữ liệu nội bộ mã hoá, web không biết gì về nó.
+    'KHÔNG BAO GIỜ dùng tool này để tra mã đề tài / nội dung catalog capstone — web ' +
+    'không có dữ liệu đó, dùng tim_de_tai/xem_de_tai. ' +
     // ⚠️ Điều kiện gọi để ở ĐÂY chứ không chỉ trong system prompt: description là thứ
     // model đọc lúc quyết định gọi tool. Bản trước chỉ ghi "đừng gọi ở bước 1-3" trong
     // prompt và nó gọi ngay lượt 1.
@@ -285,19 +280,17 @@ export function datHamWebSearch(fn: ((cauHoi: string) => Promise<unknown>) | nul
 }
 
 /**
- * Số lượt người dùng đã nói, do UI cập nhật trước mỗi vòng lặp.
+ * Tra web sớm hơn mốc này thì kết quả chung chung mà vẫn mất ~9 giây mỗi lần.
+ * Cưỡng chế DUY NHẤT bằng cách ẩn tool (`advisorTools`) — tool không nằm trong
+ * danh sách gửi API thì model không thể gọi, không cần cổng thứ hai.
  *
- * Dùng để cưỡng chế THỨ TỰ gọi tool. Cần vì prompt không làm được việc này: đã ghi
- * tiền điều kiện cả trong `description` của tool lẫn trong system prompt, mà
- * gpt-4o-mini vẫn gọi `web_search` ngay lượt 1 — nơi chưa biết painpoint là gì.
- * Đếm lượt là ràng buộc xác định, không phải khớp mẫu.
+ * Bản trước có thêm cổng đếm lượt trong `runTool` qua một biến module mutable
+ * (`datSoLuot`). Đã bỏ sau khi nó tự bắn vào chân: Vite HMR tạo NHIỀU instance
+ * của module này, UI set số lượt trên instance này còn `runTool` đọc instance
+ * kia — thế là chặn cả lời gọi hợp lệ do chính mình ép (`epGoi`). State mutable
+ * trong module + HMR là tổ hợp không tin được; ràng buộc tĩnh (ẩn tool) thì không
+ * có state nào để lệch.
  */
-let soLuotNguoiDung = 0;
-export function datSoLuot(n: number): void {
-  soLuotNguoiDung = n;
-}
-
-/** Tra web sớm hơn mốc này thì kết quả chung chung mà vẫn mất ~9 giây mỗi lần. */
 const LUOT_TOI_THIEU_WEB_SEARCH = 4;
 
 /**
@@ -360,7 +353,7 @@ Ví dụ: *"trường không có chỗ nào gom deadline các môn lại"* → *
 
 **3. Chốt painpoint.** Khi tới nguyên nhân can thiệp được, phát biểu lại painpoint trong một câu, và nói rõ nó khác gì với câu họ nói ban đầu.
 
-**3b. Tạo khảo sát để lấy bằng chứng.** Painpoint mới chỉ là của một người. Giải thích cho họ: cần hỏi thêm người khác mới biết đây là vấn đề chung hay chỉ riêng họ. Rồi **gọi \`tao_khao_sat\` NGAY**.
+**3b. Tạo khảo sát để lấy bằng chứng.** Painpoint mới chỉ là của một người. Giải thích cho họ: cần hỏi thêm người khác mới biết đây là vấn đề chung hay chỉ riêng họ. Rồi **gọi \`tao_khao_sat\` NGAY TRONG CÙNG LƯỢT bạn vừa gán nhãn nguyên nhân** — ngay sau câu phát biểu painpoint, **đừng chờ người dùng xác nhận, đừng hỏi thêm câu nào trước đó**. Tool chỉ tạo bản nháp nên gọi "sớm" không có rủi ro gì; không gọi mới là lỗi, vì người dùng sẽ không bao giờ thấy nút tạo khảo sát.
 
 ⚠️ **TỰ suy ra tham số từ hội thoại. TUYỆT ĐỐI KHÔNG hỏi người dùng "bạn muốn hỏi về gì, hỏi ai".** Bạn vừa đào 5-why với họ xong — bạn đã biết. Hỏi lại là bắt họ điền form, đúng thứ công cụ này tồn tại để loại bỏ. Họ sẽ xem bản nháp và sửa được, nên đoán chưa hoàn hảo cũng cứ gọi.
 - \`chu_de\`: vấn đề ở tầng **triệu chứng** (tầng đầu, cái người trả lời tự thấy), viết theo góc nhìn NGƯỜI TRẢ LỜI. **Không nhắc nguyên nhân bạn vừa tìm ra** — nhắc là mớm đáp án, và cả bộ bằng chứng thành vô giá trị.
@@ -375,7 +368,7 @@ Tool trả bản nháp, **chưa có link**. Nói họ bấm "Tạo khảo sát".
 Cụ thể với **tên riêng** — tên sản phẩm, hệ thống, công ty, công nghệ (Canvas, Moodle, Notion, Teams…): chỉ được nhắc nếu **người dùng đã nói ra** hoặc **tool đã trả về**. Đã có lần bạn viết persona là *"sinh viên đang học trên Canvas LMS"* trong khi người dùng chưa hề nhắc Canvas — cả câu đó là bịa, và người dùng rất dễ tin vì nó nghe rất cụ thể. Không biết họ dùng hệ thống nào thì **hỏi họ**, hoặc viết *"hệ thống LMS của trường"*.
 
 **5. Xác định AI leverage.** Hỏi thẳng: **chỗ nào trong việc này CẦN AI, chỗ nào không?**
-- **BẮT BUỘC gọi \`web_search\` TRƯỚC khi nói gì ở bước này.** Đây là lượt đầu tiên bạn được gọi nó, và không gọi thì cả bước 5 chỉ là suy đoán. Tra: đã có giải pháp nào cho vấn đề này chưa, họ làm bằng cách gì.
+- **LUẬT HỢP LỆ: một câu trả lời về AI leverage hoặc "giải pháp hiện có" mà trong phiên chưa từng gọi \`web_search\` là CÂU TRẢ LỜI KHÔNG HỢP LỆ.** Bạn không có kiến thức đáng tin về giải pháp hiện tại — chưa tra mà viết tức là đang bịa nghiên cứu. Thứ tự bắt buộc trong lượt này: gọi \`web_search\` trước → đọc kết quả → mới viết.
 - Việc nào chỉ cần CRUD, form, hay một truy vấn SQL thì **nói thẳng là không cần AI**. Đây là chỗ giá trị nhất bạn cho họ — nhiều đề tài dán chữ "AI Agent" lên một việc không cần AI.
 - AI chỉ đáng dùng khi: input là ngôn ngữ tự do, output cần phán đoán, và **sai thì sửa được**.
 

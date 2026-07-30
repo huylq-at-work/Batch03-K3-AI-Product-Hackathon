@@ -144,30 +144,73 @@ export async function lietKeKhoi(): Promise<
  * ~30 token/kết quả. Trả **mã + khối + tên**, KHÔNG trả mô tả — đây là bước lọc,
  * không phải bước đọc. Trả mô tả cho 10 kết quả = ~7K token và model lại đọc lướt.
  */
+/** So sánh không phân biệt hoa thường VÀ không phân biệt kiểu gạch ngang.
+ *  Tên khối trong xlsx dùng en-dash "–"; model hay gõ lại thành "-". */
+function chuanHoa(s: string): string {
+  return s.toLowerCase().replace(/[–—]/g, '-');
+}
+
 export async function timDeTai(opts: {
   tu_khoa?: string;
   khoi?: string;
   gioi_han?: number;
 }): Promise<
-  | { tong_khop: number; ket_qua: { ma: string; khoi: string; ten: string }[]; bi_cat: number }
+  | {
+      tong_khop: number;
+      ket_qua: { ma: string; khoi: string; ten: string }[];
+      bi_cat: number;
+      goi_y?: { message: string; ma_trong_khoi: string[]; ma_gan_giong: string[] };
+    }
   | ToolError
 > {
   const d = await load();
   if (!d) return { error: loadError!, message: LOAD_ERROR_MSG[loadError!] };
 
-  const kw = (opts.tu_khoa ?? '').trim().toLowerCase();
-  const kh = (opts.khoi ?? '').trim().toLowerCase();
+  const kw = chuanHoa((opts.tu_khoa ?? '').trim());
+  const kh = chuanHoa((opts.khoi ?? '').trim());
   const limit = Math.min(Math.max(opts.gioi_han ?? 10, 1), 25);
 
   const khop = d.filter((x) => {
-    if (kh && !x.khoi.toLowerCase().includes(kh)) return false;
+    if (kh && !chuanHoa(x.khoi).includes(kh)) return false;
     if (!kw) return true;
     // Khớp TẤT CẢ từ khoá, không phải một-trong-các-từ: filter hẹp thì ít rác hơn,
-    // và với 360 dòng thì hẹp tốt hơn rộng.
+    // và với 360 dòng thì hẹp tốt hơn rộng. Token được khớp cả với TÊN KHỐI: model
+    // hay nhét tên khối vào tu_khoa ("fin-05 Fintech - Ví điện tử"), mà tên khối
+    // thì không nằm trong tên đề — thiếu dòng này thì một token "fintech" giết cả
+    // câu truy vấn dù mã FIN-05 tồn tại. Đã xảy ra thật trong demo.
     return kw
       .split(/\s+/)
-      .every((t) => x.ten.toLowerCase().includes(t) || x.ma.toLowerCase().includes(t));
+      .every(
+        (t) =>
+          chuanHoa(x.ten).includes(t) || chuanHoa(x.ma).includes(t) || chuanHoa(x.khoi).includes(t),
+      );
   });
+
+  // 0 khớp thì ĐỪNG trả rỗng câm: model sẽ không có gì để nói ngoài "không có",
+  // và chạy thật nó đã lặp câu đó 3 lượt liền rồi quay ra tra web về catalog nội
+  // bộ. Trả kèm mã THẬT (trong khối đang lọc + mã gần giống chuỗi người dùng gõ)
+  // để model nói được "không có FIN-55, nhưng khối này có FIN-01..FIN-20".
+  if (khop.length === 0) {
+    const trongKhoi = kh ? d.filter((x) => chuanHoa(x.khoi).includes(kh)) : [];
+    const stripped = kw.replace(/[^a-z0-9]/g, '');
+    const maGan = stripped
+      ? d.filter((x) =>
+          chuanHoa(x.ma).replace(/[^a-z0-9]/g, '').startsWith(stripped.slice(0, 3)),
+        )
+      : [];
+    return {
+      tong_khop: 0,
+      ket_qua: [],
+      bi_cat: 0,
+      goi_y: {
+        message:
+          'Không đề nào khớp truy vấn này. Dưới đây là mã THẬT trong catalog — nói cho ' +
+          'người dùng các mã này thay vì chỉ nói "không có".',
+        ma_trong_khoi: trongKhoi.slice(0, 20).map((x) => x.ma),
+        ma_gan_giong: maGan.slice(0, 5).map((x) => x.ma),
+      },
+    };
+  }
 
   return {
     tong_khop: khop.length,

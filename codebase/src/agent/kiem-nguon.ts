@@ -23,7 +23,7 @@ const KIEM_SYSTEM = `Bạn là bộ kiểm tra nguồn. Cho hai khối văn bả
 
 Liệt kê mọi TÊN RIÊNG của sản phẩm, hệ thống, công ty, công nghệ, hoặc tổ chức xuất hiện trong VĂN BẢN nhưng KHÔNG xuất hiện trong NGUỒN (khớp không phân biệt hoa thường).
 
-KHÔNG tính: tên người, tên khái niệm chung (AI, LMS, MVP, CRUD, web, app), mã đề tài dạng XXX-01.
+KHÔNG tính: tên người · mã đề tài dạng XXX-01 · "VinUni" (trường của mọi người dùng app này, luôn là ngữ cảnh hợp lệ) · từ viết tắt và khái niệm kỹ thuật CHUNG không thuộc về một hãng nào (AI, LMS, MVP, CRUD, API, SQL, UI, UX, web, app, backend, frontend, chatbot, framework). Phép thử: "X" có phải một sản phẩm/công ty CỤ THỂ mà đội khác không thể tự nhận là mình không? Không phải → đừng liệt kê.
 
 Trả về DUY NHẤT một JSON array các chuỗi, đúng như chúng xuất hiện trong VĂN BẢN. Không có gì thì trả [].
 Ví dụ: ["Canvas", "Notion"] hoặc []`;

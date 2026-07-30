@@ -34,6 +34,13 @@ export type ToolChatFn = (args: {
   system: string;
   tools: ToolDef[];
   messages: ToolLoopMsg[];
+  /**
+   * Ép model PHẢI gọi tool này trong lượt (map sang `tool_choice` của từng SDK).
+   * Dùng khi prompt không giữ được: "BẮT BUỘC gọi web_search ở bước 5" đã thất bại
+   * 3 lần chạy liên tiếp — model cứ viết thẳng từ trí nhớ. Chỉ ép được ở vòng đầu;
+   * các vòng sau phải tự do để model đọc kết quả rồi viết.
+   */
+  force?: string;
 }) => Promise<{
   text: string;
   calls: { id: string; name: string; input: Record<string, unknown> }[];
@@ -61,6 +68,8 @@ export async function runToolLoop(args: {
   messages: ToolLoopMsg[];
   /** Cho phép ghi đè trần, ví dụ lượt hội thoại dài cần nhiều tool hơn. */
   maxVong?: number;
+  /** Ép gọi tool này ở VÒNG ĐẦU của lượt. Xem chú thích ở ToolChatFn.force. */
+  epGoi?: string;
 }): Promise<ToolLoopResult> {
   const { chat, system, tools } = args;
   const max = args.maxVong ?? MAX_VONG;
@@ -68,10 +77,18 @@ export async function runToolLoop(args: {
   const calls: ToolLoopResult['calls'] = [];
   let vong = 0;
 
+  // Cache trong MỘT lần chạy vòng lặp: cùng tool + cùng input → trả kết quả cũ,
+  // không chạy lại. Đo được: model gọi `xem_de_tai` 3 lần y hệt trong một lượt —
+  // lãng phí thuần (catalog không đổi giữa hai vòng). An toàn vì tool GHI duy nhất
+  // (`tao_khao_sat`) chỉ trả bản nháp, không có side effect.
+  const daChay = new Map<string, unknown>();
+
   while (vong < max) {
     vong += 1;
 
-    const res = await chat({ system, tools, messages });
+    // Chỉ ép ở vòng 1; từ vòng 2 model phải được tự do đọc kết quả rồi viết,
+    // ép tiếp thì nó gọi tool mãi và không bao giờ trả lời.
+    const res = await chat({ system, tools, messages, force: vong === 1 ? args.epGoi : undefined });
 
     if (res.calls.length === 0) {
       // Model thôi gọi tool → đây là câu trả lời.
@@ -87,12 +104,18 @@ export async function runToolLoop(args: {
     // Chạy song song, nhưng gom TẤT CẢ kết quả vào MỘT lượt tool_results.
     const results = await Promise.all(
       res.calls.map(async (c) => {
+        const khoa = `${c.name}:${JSON.stringify(c.input)}`;
         let result: unknown;
-        try {
-          result = await runTool(c.name, c.input);
-        } catch (err) {
-          // Tool lỗi vẫn PHẢI có tool_result. Thiếu một cái là vỡ cả lượt sau.
-          result = { error: 'tool_loi', message: err instanceof Error ? err.message : String(err) };
+        if (daChay.has(khoa)) {
+          result = daChay.get(khoa);
+        } else {
+          try {
+            result = await runTool(c.name, c.input);
+          } catch (err) {
+            // Tool lỗi vẫn PHẢI có tool_result. Thiếu một cái là vỡ cả lượt sau.
+            result = { error: 'tool_loi', message: err instanceof Error ? err.message : String(err) };
+          }
+          daChay.set(khoa, result);
         }
         calls.push({ name: c.name, input: c.input, result });
         return { id: c.id, name: c.name, content: JSON.stringify(result) };

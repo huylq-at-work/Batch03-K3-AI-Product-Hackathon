@@ -23,8 +23,8 @@ export function createAnthropicProvider(apiKey: string, model: string): LlmProvi
   return {
     label: `Anthropic ${model}`,
     isReal: true,
-    toolChat: ({ system, tools, messages }) =>
-      anthropicToolChat(client, model, system, tools, messages),
+    toolChat: ({ system, tools, messages, force }) =>
+      anthropicToolChat(client, model, system, tools, messages, force),
     async complete(system: string, user: string): Promise<TurnResult> {
       const response = await client.messages.create({
         model,
@@ -76,6 +76,7 @@ async function anthropicToolChat(
   system: string,
   tools: ToolDef[],
   messages: ToolLoopMsg[],
+  force?: string,
 ): Promise<{ text: string; calls: { id: string; name: string; input: Record<string, unknown> }[] }> {
   const an: Anthropic.MessageParam[] = [];
 
@@ -110,7 +111,13 @@ async function anthropicToolChat(
     system,
     // effort low: cố vấn tra cứu + dẫn hội thoại, không phải suy luận sâu.
     output_config: { effort: 'low' },
-    ...(tools.length ? { tools: tools as unknown as Anthropic.Tool[] } : {}),
+    ...(tools.length
+      ? {
+          tools: tools as unknown as Anthropic.Tool[],
+          // Ép gọi tool khi vòng lặp yêu cầu — xem ToolChatFn.force.
+          ...(force ? { tool_choice: { type: 'tool' as const, name: force } } : {}),
+        }
+      : {}),
     messages: an,
   });
 

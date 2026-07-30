@@ -72,8 +72,8 @@ export function createOpenAiProvider(
       return normalize(extractJson(msg.content));
     },
 
-    toolChat: ({ system, tools, messages }) =>
-      openAiToolChat(apiKey, model, baseUrl, system, tools, messages),
+    toolChat: ({ system, tools, messages, force }) =>
+      openAiToolChat(apiKey, model, baseUrl, system, tools, messages, force),
 
     webSearch: (cauHoi) => openAiWebSearch(apiKey, model, baseUrl, cauHoi),
   };
@@ -167,6 +167,7 @@ async function openAiToolChat(
   system: string,
   tools: ToolDef[],
   messages: ToolLoopMsg[],
+  force?: string,
 ): Promise<{ text: string; calls: { id: string; name: string; input: Record<string, unknown> }[] }> {
   type OaMsg = Record<string, unknown>;
   const oa: OaMsg[] = [{ role: 'system', content: system }];
@@ -200,15 +201,17 @@ async function openAiToolChat(
       temperature: 0,
       max_tokens: 2048,
       messages: oa,
-      // Không ép `tool_choice: required` — cố vấn phải được quyền TRẢ LỜI THẲNG
-      // khi không cần tra gì. Ép gọi tool là buộc nó tra catalog cả những lượt
-      // chỉ đang hỏi lại cho rõ.
+      // Mặc định KHÔNG ép tool (`tool_choice: auto`) — cố vấn phải được quyền trả
+      // lời thẳng khi không cần tra gì. Ngoại lệ duy nhất là `force`: vòng lặp
+      // truyền vào khi prompt đã chứng minh là không giữ được (web_search bước 5
+      // thua 3 lần chạy liên tiếp).
       ...(tools.length
         ? {
             tools: tools.map((t) => ({
               type: 'function',
               function: { name: t.name, description: t.description, parameters: t.input_schema },
             })),
+            ...(force ? { tool_choice: { type: 'function', function: { name: force } } } : {}),
           }
         : {}),
     }),

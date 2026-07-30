@@ -3,7 +3,6 @@ import {
   ADVISOR_SYSTEM_PROMPT,
   advisorTools,
   datHamWebSearch,
-  datSoLuot,
   deTaiToolsDisabled,
 } from '../agent/tools';
 import { duocTaoKhaoSat, kiemDauRa, kiemDauVao, type ViPham } from '../agent/guard';
@@ -96,9 +95,8 @@ export function Advisor({
     setError('');
     setViPham([]);
     const next: ToolLoopMsg[] = [...messages, { role: 'user', text }];
-    // Cấp số lượt cho cổng thứ tự tool (web_search chỉ mở từ lượt 4).
+    // Số lượt quyết định tool nào hiện (web_search mở từ lượt 4 — advisorTools).
     const soLuot = next.filter((m) => m.role === 'user').length;
-    datSoLuot(soLuot);
     setMessages(next);
     setBusy(true);
     setDangLam('đang suy nghĩ…');
@@ -110,6 +108,14 @@ export function Advisor({
         // Theo số lượt: web_search bị ẩn trước lượt 4. Xem advisorTools().
         tools: advisorTools(soLuot) as never,
         messages: next,
+        // Từ lượt 5 (pha leverage/MVP) mà cả phiên CHƯA tra web lần nào thì ép gọi
+        // một lần — prompt "bắt buộc tra trước khi viết" đã thua 3 lần chạy liên
+        // tiếp, model cứ viết từ trí nhớ. Chỉ ép lần đầu; các lượt sau tự do.
+        epGoi:
+          soLuot >= 5 &&
+          !next.some((m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'web_search'))
+            ? 'web_search'
+            : undefined,
       });
       setMessages(r.messages);
 
