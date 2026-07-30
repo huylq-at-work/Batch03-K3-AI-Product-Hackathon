@@ -1,0 +1,310 @@
+import { useEffect, useRef, useState } from 'react';
+import {
+  ADVISOR_SYSTEM_PROMPT,
+  ADVISOR_TOOLS,
+  datHamTimWeb,
+  deTaiToolsDisabled,
+} from '../agent/tools';
+import { duocTaoKhaoSat, kiemDauRa, kiemDauVao, type ViPham } from '../agent/guard';
+import { ketQuaTool, runToolLoop, type ToolLoopMsg } from '../agent/tool-loop';
+import { resolveProvider } from '../llm';
+import { agents, newId } from '../store/db';
+import type { SubAgent } from '../types';
+
+/**
+ * CỐ VẤN — agent chính, thứ người dùng gặp khi mở app.
+ *
+ * Việc của nó: dẫn người dùng tìm painpoint THẬT của đề tài họ đang làm. Sub-agent
+ * khảo sát là KẾT QUẢ của cuộc tư vấn, không phải cửa vào — bản trước mở app ra là
+ * form "Tạo agent khảo sát", bắt người dùng làm việc quản trị trước khi được tư vấn.
+ *
+ * Khác `Chat.tsx` (sub-agent) ở chỗ: ở đây có tool và được giải thích dài; sub-agent
+ * thì hỏi đúng một câu mỗi lượt và không giải thích gì, vì nó đang lấy bằng chứng
+ * từ người lạ.
+ */
+
+const provider = resolveProvider();
+
+// Cấp hàm tra web cho `runTool`. Làm ở đây để tools.ts không phải import llm/
+// (tránh vòng phụ thuộc). Provider không tra web được thì set null, và tool sẽ
+// trả {error} để agent nói rõ là chưa nghiên cứu được.
+datHamTimWeb(provider.timWeb ? (q) => provider.timWeb!(q) : null);
+
+/** Bản nháp khảo sát do tool `tao_khao_sat` trả về. Chưa lưu gì cả. */
+interface Nhap {
+  ten: string;
+  chu_de: string;
+  persona_in: string;
+  so_tang: number;
+  cong_khai: boolean;
+}
+
+const MO_DAU =
+  'Bạn đang xét đề tài capstone nào? Cho mình mã đề (VD: EDU-01) hoặc mô tả lĩnh vực ' +
+  'bạn quan tâm cũng được.';
+
+export function Advisor({
+  ownerId,
+  onCreated,
+}: {
+  ownerId: string;
+  onCreated: (a: SubAgent) => void;
+}) {
+  const [messages, setMessages] = useState<ToolLoopMsg[]>([]);
+  const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [dangLam, setDangLam] = useState('');
+  const [error, setError] = useState('');
+  const [nhap, setNhap] = useState<Nhap | null>(null);
+  const [viPham, setViPham] = useState<ViPham[]>([]);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  // Cuộn xuống cuối mỗi khi có lượt mới. `messages.length` chứ không phải cả mảng —
+  // tool_results làm mảng đổi mà không có gì mới để xem.
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages.length, busy]);
+
+  async function send(): Promise<void> {
+    const text = input.trim();
+    if (!text || busy) return;
+    if (!provider.toolChat) {
+      setError(
+        `Provider ${provider.label} không hỗ trợ tool. Cố vấn cần tool để tra đề tài và tạo ` +
+          'khảo sát — đặt VITE_LLM_PROVIDER=openai hoặc anthropic trong .env.local.',
+      );
+      return;
+    }
+
+    // Tầng 1 — chặn TRƯỚC khi gọi API. Tiêm prompt / ngoài phạm vi thì không tốn
+    // token nào. Vẫn hiện lời người dùng để họ thấy mình đã gõ gì.
+    const chan = kiemDauVao(text);
+    if (chan.chan) {
+      setInput('');
+      setError('');
+      setMessages((m) => [
+        ...m,
+        { role: 'user', text },
+        { role: 'assistant', text: chan.loi_nhan ?? 'Câu này ngoài phạm vi của mình.' },
+      ]);
+      return;
+    }
+
+    setInput('');
+    setError('');
+    setViPham([]);
+    const next: ToolLoopMsg[] = [...messages, { role: 'user', text }];
+    setMessages(next);
+    setBusy(true);
+    setDangLam('đang suy nghĩ…');
+
+    try {
+      const r = await runToolLoop({
+        chat: provider.toolChat,
+        system: ADVISOR_SYSTEM_PROMPT,
+        tools: ADVISOR_TOOLS,
+        messages: next,
+      });
+      setMessages(r.messages);
+
+      // Bản nháp lấy từ KẾT QUẢ TOOL, không parse từ text model — text có thể nhắc
+      // một khảo sát mà tool chưa từng dựng.
+      // Tầng 2 — soi text model vừa trả. Đối chiếu với kết quả tool và với lời
+      // người dùng: mã đề tài hoặc số nào không có ở hai nguồn đó là đang bịa.
+      const toolText = JSON.stringify(r.calls.map((c) => c.result));
+      const loiNguoiDung = next
+        .filter((m): m is { role: 'user'; text: string } => m.role === 'user')
+        .map((m) => m.text)
+        .join(' ');
+      setViPham(kiemDauRa(r.text, toolText, loiNguoiDung));
+
+      const d = ketQuaTool<Nhap>(r.calls, 'tao_khao_sat', (res) => {
+        const o = res as { can_xac_nhan?: boolean; nhap?: Nhap };
+        return o?.can_xac_nhan && o.nhap ? o.nhap : undefined;
+      });
+      if (d) {
+        // Cổng tool GHI: chặn tạo khảo sát khi hội thoại còn quá ngắn.
+        const cong = duocTaoKhaoSat(next.filter((m) => m.role === 'user').length);
+        if (cong.chan) setError(cong.loi_nhan ?? '');
+        else setNhap(d);
+      }
+
+      if (r.het_vong) {
+        setError('Cố vấn gọi tool quá nhiều vòng nên bị dừng. Thử hỏi lại cụ thể hơn.');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+      setDangLam('');
+    }
+  }
+
+  /** Người dùng bấm xác nhận → giờ mới ghi. Tool cố tình không tự ghi. */
+  function taoThat(): void {
+    if (!nhap) return;
+    const a: SubAgent = {
+      id: newId('a'),
+      ownerId,
+      name: nhap.ten,
+      topic: nhap.chu_de,
+      personaIn: nhap.persona_in,
+      visibility: nhap.cong_khai ? 'public' : 'private',
+      createdAt: Date.now(),
+      maxTurns: nhap.so_tang,
+    };
+    agents.save(a);
+    setNhap(null);
+    onCreated(a);
+    // Cho model biết đã tạo, để lượt sau nó không tạo lại. Không gọi API ở đây.
+    setMessages((m) => [
+      ...m,
+      {
+        role: 'user',
+        text: `[hệ thống] Người dùng đã xác nhận. Khảo sát "${a.name}" đã tạo, link #/s/${a.id}. Đừng tạo lại.`,
+      },
+    ]);
+  }
+
+  // Ẩn `tool_results` (JSON thô, người dùng không cần) và các ghi chú [hệ thống]
+  // mình chèn vào cho model. Type predicate để TS biết `.text` tồn tại sau filter.
+  const hienThi = messages.filter(
+    (m): m is Exclude<ToolLoopMsg, { role: 'tool_results' }> =>
+      m.role !== 'tool_results' && !(m.role === 'user' && m.text.startsWith('[hệ thống]')),
+  );
+
+  return (
+    <div className="thread">
+      <div className="log" ref={logRef}>
+        {hienThi.length === 0 && (
+          <div className="empty">
+            <h1>Tìm painpoint thật của đề tài bạn</h1>
+            <p className="muted">
+              Mình sẽ đào 5-why cùng bạn tới nguyên nhân <b>can thiệp được</b> — không dừng ở
+              "khó chọn đề" hay "mất thời gian". Xong rồi mình dựng một chatbot khảo sát để bạn
+              gửi cho người khác, lấy bằng chứng xem đây là vấn đề chung hay chỉ riêng bạn.
+            </p>
+            <div className="notice small">
+              Đang dùng <b>{provider.label}</b>
+              {!provider.isReal && ' — KHÔNG phải AI, chỉ là baseline rule-based'}
+              {deTaiToolsDisabled() && ' · tool tra đề tài đang TẮT'}
+            </div>
+            <p className="muted small">{MO_DAU}</p>
+          </div>
+        )}
+
+        {hienThi.map((m, i) =>
+          m.role === 'tool_calls' ? (
+            <div className="toolchip" key={i}>
+              {m.calls.map((c) => nhanTool(c.name)).join(' · ')}
+            </div>
+          ) : (
+            <div className={`msg ${m.role}`} key={i}>
+              <Dam text={m.text} />
+            </div>
+          ),
+        )}
+
+        {busy && <div className="msg assistant busy">{dangLam}</div>}
+        {error && <div className="err">{error}</div>}
+
+        {/* Không im lặng sửa câu trả lời — hiện ra để người dùng biết chỗ nào đừng
+            tin. Sửa ngầm thì họ mất cách phát hiện agent đang bịa. */}
+        {viPham.length > 0 && (
+          <div className="err">
+            <b>Cảnh báo: câu trả lời trên có chỗ không có nguồn.</b>
+            <ul>
+              {viPham.map((v, i) => (
+                <li key={i}>{v.chi_tiet}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {nhap && (
+          <div className="draft">
+            <h3>Bản nháp khảo sát</h3>
+            <p className="muted small">
+              Cố vấn đã dựng bản nháp. Chưa lưu gì — xem lại rồi bấm tạo. Sửa được sau khi tạo.
+            </p>
+            <dl>
+              <dt>Tên</dt>
+              <dd>{nhap.ten}</dd>
+              <dt>Hỏi về</dt>
+              <dd>{nhap.chu_de}</dd>
+              <dt>Hỏi ai</dt>
+              <dd>{nhap.persona_in}</dd>
+              <dt>Số tầng</dt>
+              <dd>
+                {nhap.so_tang} · {nhap.cong_khai ? 'public' : 'private'}
+              </dd>
+            </dl>
+            <div className="row">
+              <button className="primary" onClick={taoThat}>
+                Tạo khảo sát
+              </button>
+              <button onClick={() => setNhap(null)}>Bỏ</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="composer">
+        <textarea
+          rows={1}
+          value={input}
+          placeholder={hienThi.length === 0 ? MO_DAU : 'Trả lời…'}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter gửi, Shift+Enter xuống dòng — quy ước người dùng đã quen.
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              void send();
+            }
+          }}
+        />
+        <button className="primary" disabled={busy || !input.trim()} onClick={() => void send()}>
+          Gửi
+        </button>
+      </div>
+      <p className="muted small center">
+        Cố vấn chỉ nói về đề tài mà tool tra được. Nó không tra thị trường hay đối thủ.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Render `**đậm**` — model bôi đậm nhãn tầng ("Đó là một **triệu chứng**") và câu
+ * hỏi, nên để nguyên thì người dùng thấy dấu sao thô và mất chính chỗ cần nhấn.
+ *
+ * Cố ý KHÔNG dùng thư viện markdown: chỉ cần đậm, và một renderer đầy đủ mở đường
+ * cho HTML từ model chèn vào DOM. Ở đây mọi thứ vẫn là text node.
+ */
+function Dam({ text }: { text: string }) {
+  const phan = text.split(/\*\*(.+?)\*\*/g);
+  return (
+    <>
+      {/* split với capture group: index lẻ là phần trong **…** */}
+      {phan.map((s, i) => (i % 2 === 1 ? <b key={i}>{s}</b> : s))}
+    </>
+  );
+}
+
+/** Tên tool cho người đọc — người dùng không cần biết tên hàm. */
+function nhanTool(name: string): string {
+  switch (name) {
+    case 'liet_ke_khoi':
+      return 'đang xem các khối đề tài';
+    case 'tim_de_tai':
+      return 'đang tìm đề tài';
+    case 'xem_de_tai':
+      return 'đang đọc mô tả đề tài';
+    case 'tim_web':
+      return 'đang tra web';
+    case 'tao_khao_sat':
+      return 'đang dựng khảo sát';
+    default:
+      return name;
+  }
+}

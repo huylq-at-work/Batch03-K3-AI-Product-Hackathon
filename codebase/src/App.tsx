@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './store/auth';
 import { agents } from './store/db';
+import { Advisor } from './components/Advisor';
 import { Chat } from './components/Chat';
-import { Dashboard } from './components/Dashboard';
+import { Sidebar } from './components/Sidebar';
 import type { SubAgent } from './types';
 
 /** Router tối giản trên hash: `#/s/<agentId>` = trang trả lời khảo sát public. */
@@ -27,7 +28,7 @@ function Login() {
     <div className="wrap narrow">
       <div className="card">
         <h1>Đào Gốc</h1>
-        <p className="muted">Khảo sát 5-why thích ứng — hỏi tới nguyên nhân can thiệp được.</p>
+        <p className="muted">Cố vấn tìm painpoint thật cho đề tài capstone của bạn.</p>
 
         <div className="notice warn">
           <b>Đăng nhập này không phải bảo mật thật.</b> Mọi thứ lưu trong localStorage của
@@ -67,61 +68,93 @@ function Login() {
   );
 }
 
-function Shell() {
-  const { user } = useAuth();
-  const hash = useHashRoute();
-  const [open, setOpen] = useState<SubAgent | null>(null);
+/** Trang người ngoài mở link khảo sát. Không cần đăng nhập. */
+function PublicSurvey({ id }: { id: string }) {
+  const a = agents.byId(id);
 
-  // Link public: trả lời được không cần đăng nhập.
-  const publicMatch = hash.match(/^#\/s\/([\w]+)$/);
-  if (publicMatch) {
-    const a = agents.byId(publicMatch[1]);
-    if (!a) {
-      return (
-        <div className="wrap narrow">
-          <div className="card">
-            <h2>Không tìm thấy khảo sát</h2>
-            <p className="muted">Link sai, hoặc agent được tạo trên một máy/browser khác.</p>
-            <p className="muted small">
-              Bản prototype lưu dữ liệu trong localStorage của từng browser, nên link public chỉ
-              hoạt động trên cùng máy. Chia sẻ thật cần backend — xem README.
-            </p>
-          </div>
-        </div>
-      );
-    }
-    if (a.visibility !== 'public') {
-      return (
-        <div className="wrap narrow">
-          <div className="card">
-            <h2>Khảo sát này đang ở chế độ private</h2>
-            <p className="muted">Chủ agent cần đặt public trước khi chia sẻ link.</p>
-          </div>
-        </div>
-      );
-    }
+  if (!a) {
     return (
-      <div className="wrap">
-        <Chat agent={a} />
+      <div className="wrap narrow">
+        <div className="card">
+          <h2>Không tìm thấy khảo sát</h2>
+          <p className="muted">Link sai, hoặc khảo sát được tạo trên một máy/browser khác.</p>
+          <p className="muted small">
+            Bản prototype lưu dữ liệu trong localStorage của từng browser, nên link public chỉ
+            hoạt động trên cùng máy. Chia sẻ thật cần backend — xem README.
+          </p>
+        </div>
       </div>
     );
   }
+  if (a.visibility !== 'public') {
+    return (
+      <div className="wrap narrow">
+        <div className="card">
+          <h2>Khảo sát này đang ở chế độ private</h2>
+          <p className="muted">Chủ khảo sát cần đặt public trước khi chia sẻ link.</p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="wrap">
+      <Chat agent={a} />
+    </div>
+  );
+}
+
+function Shell() {
+  const { user, signOut } = useAuth();
+  const hash = useHashRoute();
+  const [open, setOpen] = useState<SubAgent | null>(null);
+  // agents nằm trong localStorage nên không tự re-render. Bump để đọc lại.
+  const [tick, setTick] = useState(0);
+  const lamMoi = useCallback(() => setTick((t) => t + 1), []);
+
+  const publicMatch = hash.match(/^#\/s\/(\w+)$/);
+  if (publicMatch) return <PublicSurvey id={publicMatch[1]} />;
 
   if (!user) return <Login />;
 
-  if (open) {
-    return (
-      <div className="wrap">
-        <header className="bar">
-          <button onClick={() => setOpen(null)}>← Về dashboard</button>
-          <span className="muted small">{open.name}</span>
-        </header>
-        <Chat agent={open} />
-      </div>
-    );
-  }
+  const danhSach = agents
+    .mine(user.id)
+    .sort((a, b) => b.createdAt - a.createdAt);
+  void tick;
 
-  return <Dashboard onOpen={setOpen} />;
+  return (
+    <div className="shell">
+      <Sidebar
+        username={user.username}
+        danhSach={danhSach}
+        dangMo={open?.id ?? null}
+        onNewChat={() => setOpen(null)}
+        onOpen={setOpen}
+        onSignOut={signOut}
+        onChanged={lamMoi}
+      />
+      <main className="main">
+        {open ? (
+          <>
+            <header className="mainbar">
+              <button onClick={() => setOpen(null)}>← Về cố vấn</button>
+              <span className="muted small">
+                Bạn đang xem khảo sát <b>{open.name}</b> như người được hỏi
+              </span>
+            </header>
+            <Chat agent={open} />
+          </>
+        ) : (
+          <Advisor
+            ownerId={user.id}
+            onCreated={(a) => {
+              lamMoi();
+              setOpen(a);
+            }}
+          />
+        )}
+      </main>
+    </div>
+  );
 }
 
 export default function App() {

@@ -147,3 +147,105 @@ button.primary { background: var(--star-bg); border-color: var(--star); color: v
 }
 .agentRow:last-child { border: none; }
 .agentRow input { min-width: 240px; font-family: var(--mono); font-size: 12px; }
+
+/* ─── Layout kiểu ChatGPT ─────────────────────────────────────────────────────
+   Sidebar cố định + khung chat chiếm hết chiều cao. `100dvh` chứ không `100vh`:
+   trên mobile thanh địa chỉ ăn mất phần cuối và composer bị đẩy ra ngoài màn hình. */
+.shell {
+  display: grid; grid-template-columns: 268px 1fr;
+  height: 100dvh; overflow: hidden;
+}
+@media (max-width: 760px) {
+  .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .sidebar { max-height: 38dvh; }
+}
+
+.sidebar {
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 14px 12px; overflow-y: auto;
+  background: var(--panel); border-right: 1px solid var(--line);
+}
+.newchat { width: 100%; text-align: left; font-weight: 600; }
+.sidesection { flex: 1; min-height: 0; }
+.sidesection h3 { margin-top: 4px; }
+
+.sideitem {
+  display: flex; align-items: center; gap: 4px;
+  border-radius: 7px; margin-bottom: 2px;
+}
+.sideitem:hover { background: var(--bg); }
+.sideitem.active { background: var(--star-bg); }
+.sideitemMain {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+  text-align: left; background: none; border: none; padding: 8px 9px;
+}
+.sideitemMain:hover { border: none; }
+.sideitemName {
+  font-size: 14px; font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sideitemActions { display: flex; gap: 2px; padding-right: 5px; }
+.sideitemActions button { padding: 3px 6px; font-size: 11px; }
+.sidefoot {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; padding-top: 12px; border-top: 1px solid var(--line);
+}
+
+.main { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.mainbar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 20px; border-bottom: 1px solid var(--line);
+}
+/* Chat.tsx (sub-agent) dùng .wrap bên trong .main — cho nó cuộn riêng. */
+.main > .wrap { overflow-y: auto; flex: 1; }
+
+/* Luồng hội thoại của cố vấn */
+.thread { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.thread .log {
+  flex: 1; max-height: none; overflow-y: auto;
+  padding: 24px 20px 8px; scroll-behavior: smooth;
+}
+/* Cột đọc hẹp lại — dòng dài quá 75 ký tự thì mắt khó bắt dòng tiếp. */
+.thread .log > *, .thread .empty { max-width: 720px; margin-left: auto; margin-right: auto; }
+
+.thread .msg { max-width: 100%; margin-bottom: 18px; }
+.thread .msg.assistant { background: none; border: none; padding: 0; }
+.thread .msg.user {
+  background: var(--panel); border: 1px solid var(--line);
+  margin-left: auto; max-width: 80%; width: fit-content;
+}
+
+/* Lời gọi tool: hiện ra để người dùng biết agent đang TRA chứ không phải đang đoán.
+   Đây là chỗ chống lớp ① ở mặt UI — im lặng thì không phân biệt được hai việc đó. */
+.toolchip {
+  display: inline-block; margin: -6px 0 16px;
+  font: 500 12px/1.4 var(--mono); color: var(--ink-3);
+  padding: 4px 9px; border-radius: 20px;
+  background: var(--bg); border: 1px dashed var(--line);
+}
+
+.thread .empty { padding: 8vh 0 0; }
+.thread .empty h1 { font-size: 28px; margin-bottom: 10px; }
+
+.thread .composer {
+  padding: 8px 20px 0; margin: 0; align-items: flex-end;
+  max-width: 720px; width: 100%; margin-left: auto; margin-right: auto;
+}
+.thread .composer textarea {
+  /* Cao tối thiểu 1 dòng, giãn tới 8 dòng rồi tự cuộn. */
+  min-height: 44px; max-height: 190px; padding: 11px 13px; border-radius: 10px;
+}
+.center { text-align: center; padding: 6px 20px 12px; margin: 0; }
+
+/* Bản nháp khảo sát — tool trả về, CHƯA lưu. Viền đậm để không ai tưởng đã xong. */
+.draft {
+  border: 1px solid var(--star); background: var(--star-bg);
+  border-radius: 10px; padding: 14px 16px; margin: 4px 0 18px;
+}
+.draft h3 { margin-top: 0; color: var(--star); }
+.draft dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 12px 0; }
+.draft dt {
+  font: 600 10px/1.7 var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.draft dd { margin: 0; font-size: 14px; }

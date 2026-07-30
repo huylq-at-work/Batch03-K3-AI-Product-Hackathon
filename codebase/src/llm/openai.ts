@@ -74,7 +74,80 @@ export function createOpenAiProvider(
 
     toolChat: ({ system, tools, messages }) =>
       openAiToolChat(apiKey, model, baseUrl, system, tools, messages),
+
+    timWeb: (cauHoi) => openAiWebSearch(apiKey, model, baseUrl, cauHoi),
   };
+}
+
+/**
+ * Web search THẬT qua Responses API (`POST /v1/responses`) với server tool
+ * `web_search`. OpenAI chạy tìm kiếm phía họ rồi trả kèm citation.
+ *
+ * Vì sao đường này chứ không gọi Google/Brave: chạy bằng **đúng key OpenAI đang
+ * có**, không cần key thứ hai, và không phải tự parse HTML kết quả tìm kiếm.
+ *
+ * ⚠️ `gpt-4o-mini` có thể không hỗ trợ `web_search`. Nếu API từ chối thì trả
+ * `{error}` để agent **nói rõ là không tra được**, KHÔNG âm thầm bịa — nghiên cứu
+ * bịa còn tệ hơn không nghiên cứu.
+ */
+async function openAiWebSearch(
+  apiKey: string,
+  model: string,
+  baseUrl: string,
+  cauHoi: string,
+): Promise<{ ket_qua: string; nguon: string[] } | { error: string; message: string }> {
+  const res = await fetch(`${baseUrl}/responses`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model,
+      tools: [{ type: 'web_search' }],
+      tool_choice: 'auto',
+      input:
+        `Tra web để trả lời: ${cauHoi}\n\n` +
+        'Trả lời ngắn (tối đa 5 câu). Chỉ nêu điều có trong nguồn tìm được. ' +
+        'Không có nguồn cho phần nào thì nói rõ là không tìm thấy.',
+    }),
+  });
+
+  if (!res.ok) {
+    // Kèm body: 4o-mini từ chối web_search bằng thông báo khác hẳn 404 route sai,
+    // và không có nó thì không phân biệt được hai chuyện.
+    const body = (await res.text()).slice(0, 200);
+    return {
+      error: 'web_search_that_bai',
+      message:
+        `Không tra web được (${res.status}: ${body}). Có thể model "${model}" không hỗ trợ ` +
+        'web_search — thử VITE_OPENAI_MODEL=gpt-4o. NÓI RÕ với người dùng là chưa tra được.',
+    };
+  }
+
+  const data = (await res.json()) as {
+    output_text?: string;
+    output?: { content?: { text?: string; annotations?: { url?: string }[] }[] }[];
+  };
+
+  // Responses API có `output_text` tiện dụng; nếu thiếu thì gom từ output[].content[].
+  const text =
+    data.output_text ??
+    (data.output ?? [])
+      .flatMap((o) => o.content ?? [])
+      .map((c) => c.text ?? '')
+      .join('\n')
+      .trim();
+
+  const nguon = [
+    ...new Set(
+      (data.output ?? [])
+        .flatMap((o) => o.content ?? [])
+        .flatMap((c) => c.annotations ?? [])
+        .map((a) => a.url)
+        .filter((u): u is string => !!u),
+    ),
+  ];
+
+  if (!text) return { error: 'web_search_rong', message: 'Tra web không ra kết quả nào.' };
+  return { ket_qua: text, nguon };
 }
 
 /**

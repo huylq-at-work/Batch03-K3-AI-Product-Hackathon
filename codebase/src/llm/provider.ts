@@ -19,6 +19,11 @@ export interface LlmProvider {
    * nên chỉ Anthropic dùng được — có key OpenAI mà tính năng chính không chạy.
    */
   toolChat?: ToolChatFn;
+  /**
+   * Tra web thật, cho pha nghiên cứu (bước 1 và bước 4). `undefined` = provider
+   * không tra web được → agent phải nói rõ là chưa nghiên cứu được, không suy đoán.
+   */
+  timWeb?(cauHoi: string): Promise<unknown>;
 }
 
 /** Bản ghi mỗi lời gọi AI — R5: "log/trace trong repo". */
