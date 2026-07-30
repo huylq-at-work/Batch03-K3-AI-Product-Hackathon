@@ -96,12 +96,16 @@ export function normalize(obj: unknown): TurnResult {
         }
       : null,
     numbers: Array.isArray(o.numbers)
-      ? (o.numbers as Record<string, unknown>[]).map((n) => ({
-          text: String(n?.text ?? ''),
-          nguon: (['khao_sat', 'mining', 'ASSUMPTION'].includes(String(n?.nguon))
-            ? String(n?.nguon)
-            : 'ASSUMPTION') as never,
-        }))
+      ? (o.numbers as Record<string, unknown>[])
+          .map((n) => ({
+            text: String(n?.text ?? '').trim(),
+            nguon: (['khao_sat', 'mining', 'ASSUMPTION'].includes(String(n?.nguon))
+              ? String(n?.nguon)
+              : 'ASSUMPTION') as never,
+          }))
+          // jsonMode không ép schema chặt → model đôi khi nhả entry số RỖNG text.
+          // Bỏ chúng đi, nếu không `tong_hop` sẽ đếm cả rác (" (ASSUMPTION)").
+          .filter((n) => n.text !== '')
       : [],
     message: String(o.message ?? ''),
     chain_incomplete: o.chain_incomplete === true,

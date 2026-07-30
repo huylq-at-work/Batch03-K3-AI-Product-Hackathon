@@ -72,6 +72,14 @@ export async function runTurn(
           'BẮT BUỘC có đúng một câu hỏi mở trong next_question. Đặt câu hỏi ngay.',
       );
     }
+
+    // Vá `claim` rỗng: jsonMode lỏng → model đôi khi gán node nhưng bỏ trống claim,
+    // làm why-chain mất chữ (chỉ còn nhãn). claim ĐÚNG RA là lời nguyên văn của họ,
+    // nên điền lại bằng chính lastAnswer thay vì để trống.
+    if (result.node && !result.node.claim.trim() && input.lastAnswer.trim()) {
+      result = { ...result, node: { ...result.node, claim: input.lastAnswer.trim() } };
+    }
+
     raw = JSON.stringify(result);
   } catch (err) {
     pushTrace({

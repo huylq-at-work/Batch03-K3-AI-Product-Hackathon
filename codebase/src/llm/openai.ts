@@ -24,7 +24,9 @@ export function createOpenAiProvider(
     apiKey,
     model,
     temperature: 0,
-    maxTokens: 2048,
+    // Model thinking (deepseek-v4-flash…) tiêu nhiều token cho reasoning TRƯỚC khi
+    // xuất JSON; 2048 cắt cụt output → "Unexpected end of JSON input". Nới rộng.
+    maxTokens: 8192,
     configuration: { baseURL: baseUrl, dangerouslyAllowBrowser: true },
   });
 

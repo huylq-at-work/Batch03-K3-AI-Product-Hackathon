@@ -142,6 +142,10 @@ export function Advisor({
   // Khảo sát vừa tạo → hiện THẺ (không tự chuyển trang). Bấm thẻ mới sang.
   const [khaoSatMoi, setKhaoSatMoi] = useState<SubAgent | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  // Tích luỹ MỌI kết quả tool trong phiên. Guard bịa-mã chỉ nên bắt mã CHƯA TỪNG
+  // tra; nếu chỉ soi tool output của lượt hiện tại thì mã tra ở lượt trước (vd
+  // FIN-05 tra lúc đầu, nhắc lại lúc tổng hợp) bị báo oan.
+  const toolTich = useRef('');
 
   // Cấp hàm đọc kết quả khảo sát cho tool `tong_hop_khao_sat` — cần ownerId nên
   // đăng ký trong component (không làm được ở top-level như web_search).
@@ -234,12 +238,14 @@ export function Advisor({
       // một khảo sát mà tool chưa từng dựng.
       // Tầng 2 — soi text model vừa trả. Đối chiếu với kết quả tool và với lời
       // người dùng: mã đề tài hoặc số nào không có ở hai nguồn đó là đang bịa.
-      const toolText = JSON.stringify(r.calls.map((c) => c.result));
+      // Gộp tool output lượt này VÀO kho tích luỹ, rồi soi mã/số trên toàn kho —
+      // mã đã tra ở bất kỳ lượt nào trước đó đều được coi là "có nguồn".
+      toolTich.current += JSON.stringify(r.calls.map((c) => c.result));
       const loiNguoiDung = next
         .filter((m): m is { role: 'user'; text: string } => m.role === 'user')
         .map((m) => m.text)
         .join(' ');
-      const vp = kiemDauRa(r.text, toolText, loiNguoiDung);
+      const vp = kiemDauRa(r.text, toolTich.current, loiNguoiDung);
 
       // Kiểm tên riêng bằng model (không regex) — chỉ khi đã có text và đã research
       // (pha nêu painpoint ứng viên là nơi lỗi bịa tên xảy ra). Mỗi lần kiểm là một
@@ -249,7 +255,7 @@ export function Advisor({
         const ten = await timTenRiengKhongNguon(
           provider.toolChat,
           r.text,
-          `${loiNguoiDung}\n${toolText}`,
+          `${loiNguoiDung}\n${toolTich.current}`,
         );
         for (const t of ten) {
           vp.push({

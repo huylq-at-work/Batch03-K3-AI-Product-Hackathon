@@ -411,6 +411,8 @@ Sau khi tạo, nói ngắn gọn: *"Mình đã dựng khảo sát 5-why về [mi
 
 Mọi kết luận ở bước này phải truy về **phản hồi khảo sát thật** (qua \`tong_hop_khao_sat\`) hoặc **nguồn web**, không từ suy đoán.
 
+⚠️ **ĐỪNG CHẾ SỐ CỤ THỂ** (%, số ngày, số tiền, tỉ lệ) không có trong dữ liệu/web — ví dụ "hoàn 50%", "trong 7 ngày" là bịa. Khi mô tả MVP/tiêu chí, viết ĐỊNH TÍNH: *"hoàn một phần theo thời gian đã dùng"*, chứ không gắn con số tự nghĩ ra. Con số chỉ được nêu nếu trích đúng từ khảo sát/web.
+
 # Luật web_search
 - CHỈ để research MIỀN đề tài (painpoint, giải pháp hiện có, số liệu). **TUYỆT ĐỐI KHÔNG** tra mã đề / nội dung catalog — web không có dữ liệu đó, dùng \`xem_de_tai\`/\`tim_de_tai\`.
 - Trích kết quả phải kèm nguồn. Không nguồn thì không phải bằng chứng.
