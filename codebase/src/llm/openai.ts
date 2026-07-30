@@ -72,8 +72,8 @@ export function createOpenAiProvider(
       return normalize(extractJson(msg.content));
     },
 
-    toolChat: ({ system, tools, messages, force }) =>
-      openAiToolChat(apiKey, model, baseUrl, system, tools, messages, force),
+    toolChat: ({ system, tools, messages, force, onToken }) =>
+      openAiToolChat(apiKey, model, baseUrl, system, tools, messages, force, onToken),
 
     webSearch: (cauHoi) => openAiWebSearch(apiKey, model, baseUrl, cauHoi),
   };
@@ -168,6 +168,7 @@ async function openAiToolChat(
   tools: ToolDef[],
   messages: ToolLoopMsg[],
   force?: string,
+  onToken?: (mau: string) => void,
 ): Promise<{ text: string; calls: { id: string; name: string; input: Record<string, unknown> }[] }> {
   type OaMsg = Record<string, unknown>;
   const oa: OaMsg[] = [{ role: 'system', content: system }];
@@ -193,32 +194,40 @@ async function openAiToolChat(
     }
   }
 
+  const body = {
+    model,
+    temperature: 0,
+    max_tokens: 2048,
+    messages: oa,
+    // stream chỉ khi caller muốn nghe token. Không truyền onToken thì gọi thường
+    // cho đơn giản và chắc.
+    ...(onToken ? { stream: true } : {}),
+    // Mặc định KHÔNG ép tool (`tool_choice: auto`) — cố vấn phải được quyền trả
+    // lời thẳng khi không cần tra gì. Ngoại lệ duy nhất là `force`: vòng lặp
+    // truyền vào khi prompt đã chứng minh là không giữ được (web_search bước 5
+    // thua 3 lần chạy liên tiếp).
+    ...(tools.length
+      ? {
+          tools: tools.map((t) => ({
+            type: 'function',
+            function: { name: t.name, description: t.description, parameters: t.input_schema },
+          })),
+          ...(force ? { tool_choice: { type: 'function', function: { name: force } } } : {}),
+        }
+      : {}),
+  };
+
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      max_tokens: 2048,
-      messages: oa,
-      // Mặc định KHÔNG ép tool (`tool_choice: auto`) — cố vấn phải được quyền trả
-      // lời thẳng khi không cần tra gì. Ngoại lệ duy nhất là `force`: vòng lặp
-      // truyền vào khi prompt đã chứng minh là không giữ được (web_search bước 5
-      // thua 3 lần chạy liên tiếp).
-      ...(tools.length
-        ? {
-            tools: tools.map((t) => ({
-              type: 'function',
-              function: { name: t.name, description: t.description, parameters: t.input_schema },
-            })),
-            ...(force ? { tool_choice: { type: 'function', function: { name: force } } } : {}),
-          }
-        : {}),
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) throw new Error(`OpenAI ${res.status}: ${(await res.text()).slice(0, 400)}`);
 
+  if (onToken && res.body) return await docStream(res.body, onToken);
+
+  // Đường không streaming (giữ nguyên).
   const data = (await res.json()) as {
     choices?: {
       message?: {
@@ -243,6 +252,72 @@ async function openAiToolChat(
   });
 
   return { text: msg?.content ?? '', calls };
+}
+
+/**
+ * Đọc SSE của Chat Completions khi `stream: true`.
+ *
+ * Mỗi dòng `data: {json}`; delta có `content` (mẩu text) hoặc `tool_calls` (mảng
+ * mẩu, ghép theo `index`). Ba chỗ dễ sai:
+ *   - buffer theo `\n\n`: một chunk mạng có thể cắt giữa một event.
+ *   - tool_call arguments tới thành NHIỀU mẩu, phải nối theo index.
+ *   - kết thúc bằng `data: [DONE]`.
+ */
+async function docStream(
+  stream: ReadableStream<Uint8Array>,
+  onToken: (mau: string) => void,
+): Promise<{ text: string; calls: { id: string; name: string; input: Record<string, unknown> }[] }> {
+  const reader = stream.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  let text = '';
+  const tc: { id: string; name: string; args: string }[] = [];
+
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+
+    // Xử lý từng event trọn vẹn; giữ phần dư trong buf.
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (payload === '[DONE]') continue;
+      let delta: {
+        content?: string;
+        tool_calls?: { index: number; id?: string; function?: { name?: string; arguments?: string } }[];
+      };
+      try {
+        delta = JSON.parse(payload).choices?.[0]?.delta ?? {};
+      } catch {
+        continue; // event bị cắt — bỏ, mẩu sau sẽ tới đủ
+      }
+      if (delta.content) {
+        text += delta.content;
+        onToken(delta.content);
+      }
+      for (const d of delta.tool_calls ?? []) {
+        tc[d.index] ??= { id: '', name: '', args: '' };
+        if (d.id) tc[d.index].id = d.id;
+        if (d.function?.name) tc[d.index].name = d.function.name;
+        if (d.function?.arguments) tc[d.index].args += d.function.arguments;
+      }
+    }
+  }
+
+  const calls = tc.filter(Boolean).map((c) => {
+    let input: Record<string, unknown> = {};
+    try {
+      input = c.args ? JSON.parse(c.args) : {};
+    } catch {
+      input = {};
+    }
+    return { id: c.id, name: c.name, input };
+  });
+  return { text, calls };
 }
 
 /** Fallback khi strict json_schema bị từ chối — dán schema vào prompt. */

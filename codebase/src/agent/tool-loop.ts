@@ -41,6 +41,11 @@ export type ToolChatFn = (args: {
    * các vòng sau phải tự do để model đọc kết quả rồi viết.
    */
   force?: string;
+  /**
+   * Gọi cho từng mẩu text khi model trả lời (streaming). Provider không hỗ trợ
+   * streaming thì bỏ qua và trả text một lần ở cuối — API vẫn đúng.
+   */
+  onToken?: (mau: string) => void;
 }) => Promise<{
   text: string;
   calls: { id: string; name: string; input: Record<string, unknown> }[];
@@ -70,6 +75,8 @@ export async function runToolLoop(args: {
   maxVong?: number;
   /** Ép gọi tool này ở VÒNG ĐẦU của lượt. Xem chú thích ở ToolChatFn.force. */
   epGoi?: string;
+  /** Streaming: gọi cho từng mẩu text model trả. Xem ToolChatFn.onToken. */
+  onToken?: (mau: string) => void;
 }): Promise<ToolLoopResult> {
   const { chat, system, tools } = args;
   const max = args.maxVong ?? MAX_VONG;
@@ -88,7 +95,13 @@ export async function runToolLoop(args: {
 
     // Chỉ ép ở vòng 1; từ vòng 2 model phải được tự do đọc kết quả rồi viết,
     // ép tiếp thì nó gọi tool mãi và không bao giờ trả lời.
-    const res = await chat({ system, tools, messages, force: vong === 1 ? args.epGoi : undefined });
+    const res = await chat({
+      system,
+      tools,
+      messages,
+      force: vong === 1 ? args.epGoi : undefined,
+      onToken: args.onToken,
+    });
 
     if (res.calls.length === 0) {
       // Model thôi gọi tool → đây là câu trả lời.

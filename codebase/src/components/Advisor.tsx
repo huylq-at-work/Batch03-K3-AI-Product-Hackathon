@@ -10,7 +10,29 @@ import { timTenRiengKhongNguon } from '../agent/kiem-nguon';
 import { ketQuaTool, runToolLoop, type ToolLoopMsg } from '../agent/tool-loop';
 import { resolveProvider } from '../llm';
 import { agents, newId } from '../store/db';
-import type { SubAgent } from '../types';
+import { HAN_LINK_MS, type SubAgent } from '../types';
+
+/**
+ * Lưu / nạp hội thoại cố vấn theo từng user. Đề bài yêu cầu "session lưu lại":
+ * reload trang không mất cuộc tư vấn đang dở. Chỉ lưu `messages` (đủ để dựng lại
+ * hội thoại); các state tạm (busy, nháp) không cần.
+ */
+const phienKey = (uid: string) => `daogoc.advisor.${uid}`;
+function napPhien(uid: string): ToolLoopMsg[] {
+  try {
+    const raw = localStorage.getItem(phienKey(uid));
+    return raw ? (JSON.parse(raw) as ToolLoopMsg[]) : [];
+  } catch {
+    return [];
+  }
+}
+function luuPhien(uid: string, msgs: ToolLoopMsg[]): void {
+  try {
+    localStorage.setItem(phienKey(uid), JSON.stringify(msgs));
+  } catch {
+    /* localStorage đầy hoặc bị chặn — mất session còn hơn vỡ app */
+  }
+}
 
 /**
  * CỐ VẤN — agent chính, thứ người dùng gặp khi mở app.
@@ -44,6 +66,16 @@ const MO_DAU =
   'Bạn đang xét đề tài capstone nào? Cho mình mã đề (VD: EDU-01) hoặc mô tả lĩnh vực ' +
   'bạn quan tâm cũng được.';
 
+/** Câu chào mở đầu mỗi cuộc tư vấn. Nêu rõ mình giúp được GÌ, rồi hỏi họ muốn gì. */
+const LOI_CHAO =
+  'Chào bạn 👋 Mình là cố vấn giúp bạn tìm **painpoint thật** của đề tài capstone — ' +
+  'cái vấn đề khiến đề này đáng làm, chứ không dừng ở "khó" hay "mất thời gian".\n\n' +
+  'Mình giúp được: **chọn/hiểu đề tài** (tra được 360 đề trong catalog) · **đào 5-why** ' +
+  'để ra painpoint · **dựng khảo sát** để bạn gửi người khác lấy bằng chứng · gợi ý ' +
+  '**persona, chỗ cần AI, và MVP**.\n\n' +
+  'Bạn muốn mình giúp gì? Nếu chưa rõ, cứ nói bạn đang xét đề nào (VD: EDU-01) — ' +
+  'hoặc "mình chưa có đề nào" cũng được.';
+
 export function Advisor({
   ownerId,
   onCreated,
@@ -51,20 +83,29 @@ export function Advisor({
   ownerId: string;
   onCreated: (a: SubAgent) => void;
 }) {
-  const [messages, setMessages] = useState<ToolLoopMsg[]>([]);
+  // Nạp lại hội thoại cũ của user này (session persistence).
+  const [messages, setMessages] = useState<ToolLoopMsg[]>(() => napPhien(ownerId));
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [dangLam, setDangLam] = useState('');
   const [error, setError] = useState('');
   const [nhap, setNhap] = useState<Nhap | null>(null);
   const [viPham, setViPham] = useState<ViPham[]>([]);
+  // Text đang stream về (hiện dần trong lúc chờ). Xoá khi lượt xong.
+  const [stream, setStream] = useState('');
   const logRef = useRef<HTMLDivElement>(null);
 
   // Cuộn xuống cuối mỗi khi có lượt mới. `messages.length` chứ không phải cả mảng —
   // tool_results làm mảng đổi mà không có gì mới để xem.
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages.length, busy]);
+  }, [messages.length, busy, stream]);
+
+  // Lưu session mỗi khi hội thoại đổi. Ghi cả mảng (kể cả tool_calls/results) để
+  // dựng lại đúng ngữ cảnh cho lượt sau, không chỉ text hiển thị.
+  useEffect(() => {
+    luuPhien(ownerId, messages);
+  }, [ownerId, messages]);
 
   async function send(): Promise<void> {
     const text = input.trim();
@@ -99,6 +140,7 @@ export function Advisor({
     const soLuot = next.filter((m) => m.role === 'user').length;
     setMessages(next);
     setBusy(true);
+    setStream('');
     setDangLam('đang suy nghĩ…');
 
     try {
@@ -108,6 +150,12 @@ export function Advisor({
         // Theo số lượt: web_search bị ẩn trước lượt 4. Xem advisorTools().
         tools: advisorTools(soLuot) as never,
         messages: next,
+        // Streaming: mỗi mẩu text hiện dần. Vòng gọi tool không có text nên im;
+        // vòng trả lời cuối thì chữ chạy ra.
+        onToken: (mau) => {
+          setDangLam('');
+          setStream((s) => s + mau);
+        },
         // Từ lượt 5 (pha leverage/MVP) mà cả phiên CHƯA tra web lần nào thì ép gọi
         // một lần — prompt "bắt buộc tra trước khi viết" đã thua 3 lần chạy liên
         // tiếp, model cứ viết từ trí nhớ. Chỉ ép lần đầu; các lượt sau tự do.
@@ -168,12 +216,14 @@ export function Advisor({
     } finally {
       setBusy(false);
       setDangLam('');
+      setStream(''); // text cuối đã nằm trong messages, khỏi hiện trùng
     }
   }
 
   /** Người dùng bấm xác nhận → giờ mới ghi. Tool cố tình không tự ghi. */
   function taoThat(): void {
     if (!nhap) return;
+    const luc = Date.now();
     const a: SubAgent = {
       id: newId('a'),
       ownerId,
@@ -181,8 +231,9 @@ export function Advisor({
       topic: nhap.chu_de,
       personaIn: nhap.persona_in,
       visibility: nhap.cong_khai ? 'public' : 'private',
-      createdAt: Date.now(),
+      createdAt: luc,
       maxTurns: nhap.so_tang,
+      expiresAt: luc + HAN_LINK_MS, // link sống 24h, gia hạn được ở sidebar
     };
     agents.save(a);
     setNhap(null);
@@ -208,20 +259,17 @@ export function Advisor({
     <div className="thread">
       <div className="log" ref={logRef}>
         {hienThi.length === 0 && (
-          <div className="empty">
-            <h1>Tìm painpoint thật của đề tài bạn</h1>
-            <p className="muted">
-              Mình sẽ đào 5-why cùng bạn tới nguyên nhân <b>can thiệp được</b> — không dừng ở
-              "khó chọn đề" hay "mất thời gian". Xong rồi mình dựng một chatbot khảo sát để bạn
-              gửi cho người khác, lấy bằng chứng xem đây là vấn đề chung hay chỉ riêng bạn.
-            </p>
-            <div className="notice small">
+          <>
+            {/* Câu chào mở đầu mỗi session — bong bóng của cố vấn, không gọi API. */}
+            <div className="msg assistant">
+              <Dam text={LOI_CHAO} />
+            </div>
+            <div className="notice small" style={{ maxWidth: 720, margin: '0 auto 8px' }}>
               Đang dùng <b>{provider.label}</b>
               {!provider.isReal && ' — KHÔNG phải AI, chỉ là baseline rule-based'}
               {deTaiToolsDisabled() && ' · tool tra đề tài đang TẮT'}
             </div>
-            <p className="muted small">{MO_DAU}</p>
-          </div>
+          </>
         )}
 
         {hienThi.map((m, i) =>
@@ -236,7 +284,13 @@ export function Advisor({
           ),
         )}
 
-        {busy && <div className="msg assistant busy">{dangLam}</div>}
+        {/* Bong bóng đang stream: chữ chạy ra dần. dangLam hiện khi chưa có mẩu nào. */}
+        {stream && (
+          <div className="msg assistant">
+            <Dam text={stream} />
+          </div>
+        )}
+        {busy && !stream && <div className="msg assistant busy">{dangLam}</div>}
         {error && <div className="err">{error}</div>}
 
         {/* Không im lặng sửa câu trả lời — hiện ra để người dùng biết chỗ nào đừng

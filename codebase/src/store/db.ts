@@ -1,4 +1,4 @@
-import type { SubAgent, Transcript, User } from '../types';
+import { HAN_LINK_MS, type SubAgent, type Transcript, type User } from '../types';
 
 // localStorage thay backend. Đủ cho prototype hackathon; ghi rõ là mock trong
 // spec.md §4 (mức prototype).
@@ -64,6 +64,29 @@ export const agents = {
   remove(id: string): void {
     write(K.agents, agents.all().filter((a) => a.id !== id));
   },
+  /**
+   * Mốc hết hạn, chịu được agent CŨ tạo trước khi có field này (localStorage giữ
+   * bản cũ không có expiresAt) — suy ra createdAt + 1 chu kỳ.
+   */
+  hetHan(a: SubAgent): number {
+    return a.expiresAt ?? a.createdAt + HAN_LINK_MS;
+  },
+  /** Link còn sống không (dựa mốc hết hạn). now truyền vào để test được. */
+  conHan(a: SubAgent, now: number): boolean {
+    return agents.hetHan(a) > now;
+  },
+  /**
+   * Gia hạn link thêm một chu kỳ kể từ `now`. Trả về agent đã cập nhật, hoặc null
+   * nếu không có agent. "Cấp link mới" = giữ cùng id, đặt lại mốc hết hạn — id
+   * không đổi nên link cũ vẫn dùng được, chỉ là hạn được đẩy ra.
+   */
+  giaHan(id: string, now: number): SubAgent | null {
+    const a = agents.byId(id);
+    if (!a) return null;
+    const moi = { ...a, expiresAt: now + HAN_LINK_MS };
+    agents.save(moi);
+    return moi;
+  },
 };
 
 /* ---------- transcripts ---------- */
@@ -108,4 +131,48 @@ export function exportEvidence(agentId: string): string {
     lines.push('');
   }
   return lines.join('\n');
+}
+
+/**
+ * "Database" của toàn bộ câu trả lời khảo sát, dạng .txt phẳng.
+ *
+ * Đề bài muốn "file khảo sát lưu vào database (1 file txt)". App chạy browser-only
+ * (người dùng chọn) nên không ghi được file server; localStorage LÀ database, và
+ * hàm này kết xuất nó ra một file .txt tải về được. Gọi mỗi khi có phiên mới để
+ * giữ bản sao ngoài localStorage — localStorage có thể bị xoá khi dọn cache.
+ */
+export function exportTxtDatabase(): string {
+  const out: string[] = [
+    'DAO GOC — DATABASE KHAO SAT',
+    `Ket xuat luc: ${new Date(now()).toISOString()}`,
+    `Tong so khao sat: ${agents.all().length} · tong so phien: ${transcripts.all().length}`,
+    '='.repeat(60),
+    '',
+  ];
+  for (const a of agents.all()) {
+    const ts = transcripts.byAgent(a.id);
+    out.push(
+      `[${a.id}] ${a.name}`,
+      `  chu de : ${a.topic}`,
+      `  hoi ai : ${a.personaIn}`,
+      `  het han: ${new Date(agents.hetHan(a)).toISOString()} (${agents.conHan(a, now()) ? 'con song' : 'DA CHET'})`,
+      `  so phien: ${ts.length}`,
+      '',
+    );
+    for (const t of ts) {
+      out.push(`  --- phien: ${t.respondent || '(an danh)'} @ ${new Date(t.createdAt).toISOString()}`);
+      t.turns.forEach((turn, i) => {
+        out.push(`    Q${i + 1}: ${turn.q}`);
+        out.push(`    A${i + 1}: ${turn.a}`);
+      });
+      out.push('');
+    }
+    out.push('-'.repeat(60), '');
+  }
+  return out.join('\n');
+}
+
+/** now() tách riêng để test đặt được thời gian cố định. */
+function now(): number {
+  return Date.now();
 }

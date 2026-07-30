@@ -58,6 +58,7 @@ const AGENT: SubAgent = {
   visibility: 'private',
   createdAt: 0,
   maxTurns: 5,
+  expiresAt: Number.MAX_SAFE_INTEGER, // eval không quan tâm hết hạn
 };
 
 /* ---- 4 chiều chất lượng, tất cả nhị phân (spec.md §7) ---- */

@@ -96,6 +96,25 @@ function PublicSurvey({ id }: { id: string }) {
       </div>
     );
   }
+  // Link chết sau 1 ngày. Kiểm ở đây, không phải lúc tạo — người trả lời có thể mở
+  // link đúng lúc nó vừa hết hạn.
+  if (!agents.conHan(a, Date.now())) {
+    return (
+      <div className="wrap narrow">
+        <div className="card">
+          <h2>Link khảo sát đã hết hạn</h2>
+          <p className="muted">
+            Link chỉ sống 24 giờ kể từ khi tạo (hết hạn{' '}
+            {new Date(agents.hetHan(a)).toLocaleString('vi-VN')}).
+          </p>
+          <p className="muted small">
+            Nhờ chủ khảo sát gia hạn (nút <b>gia hạn</b> trong danh sách khảo sát) rồi gửi lại
+            link — link giữ nguyên, chỉ hạn được đẩy ra.
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="wrap">
       <Chat agent={a} />
@@ -110,6 +129,8 @@ function Shell() {
   // agents nằm trong localStorage nên không tự re-render. Bump để đọc lại.
   const [tick, setTick] = useState(0);
   const lamMoi = useCallback(() => setTick((t) => t + 1), []);
+  // Đổi để remount Advisor (bắt đầu cuộc tư vấn mới, xoá session cũ).
+  const [phienMoi, setPhienMoi] = useState(0);
 
   const publicMatch = hash.match(/^#\/s\/(\w+)$/);
   if (publicMatch) return <PublicSurvey id={publicMatch[1]} />;
@@ -127,7 +148,12 @@ function Shell() {
         username={user.username}
         danhSach={danhSach}
         dangMo={open?.id ?? null}
-        onNewChat={() => setOpen(null)}
+        onNewChat={() => {
+          // Xoá session cố vấn của user rồi remount để bắt đầu cuộc mới.
+          localStorage.removeItem(`daogoc.advisor.${user.id}`);
+          setOpen(null);
+          setPhienMoi((n) => n + 1);
+        }}
         onOpen={setOpen}
         onSignOut={signOut}
         onChanged={lamMoi}
@@ -145,6 +171,7 @@ function Shell() {
           </>
         ) : (
           <Advisor
+            key={phienMoi}
             ownerId={user.id}
             onCreated={(a) => {
               lamMoi();

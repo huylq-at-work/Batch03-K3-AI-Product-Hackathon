@@ -79,7 +79,16 @@ export interface SubAgent {
   visibility: 'private' | 'public';
   createdAt: number;
   maxTurns: number;
+  /**
+   * Mốc hết hạn (ms). Link chết sau mốc này — người mở link thấy "đã hết hạn".
+   * Chủ khảo sát (hoặc cố vấn qua tool) gia hạn thì đặt lại mốc mới.
+   * Đề bài yêu cầu link die sau 1 ngày.
+   */
+  expiresAt: number;
 }
+
+/** Link sống bao lâu kể từ lúc tạo / gia hạn. */
+export const HAN_LINK_MS = 24 * 60 * 60 * 1000;
 
 export interface Transcript {
   id: string;

@@ -1,4 +1,4 @@
-import { agents, exportEvidence, transcripts } from '../store/db';
+import { agents, exportEvidence, exportTxtDatabase, transcripts } from '../store/db';
 import { readTraces } from '../llm';
 import type { SubAgent } from '../types';
 
@@ -51,12 +51,16 @@ export function Sidebar({
         )}
         {danhSach.map((a) => {
           const n = transcripts.byAgent(a.id).length;
+          const song = agents.conHan(a, Date.now());
           return (
             <div className={`sideitem ${dangMo === a.id ? 'active' : ''}`} key={a.id}>
               <button className="sideitemMain" onClick={() => onOpen(a)}>
                 <span className="sideitemName">{a.name}</span>
                 <span className="muted small">
-                  {n} phiên · {a.visibility}
+                  {n} phiên · {a.visibility} ·{' '}
+                  {song ? `còn hạn tới ${new Date(agents.hetHan(a)).toLocaleDateString('vi-VN')}` : (
+                    <span style={{ color: 'var(--no)' }}>đã hết hạn</span>
+                  )}
                 </span>
               </button>
               <div className="sideitemActions">
@@ -67,6 +71,15 @@ export function Sidebar({
                   }}
                 >
                   link
+                </button>
+                <button
+                  title="Gia hạn thêm 24h (cấp lại hạn cho link)"
+                  onClick={() => {
+                    agents.giaHan(a.id, Date.now());
+                    onChanged();
+                  }}
+                >
+                  ↻
                 </button>
                 <button
                   title="Xuất evidence .md (R1)"
@@ -91,6 +104,19 @@ export function Sidebar({
             </div>
           );
         })}
+      </div>
+
+      {/* "Database" khảo sát dạng txt. localStorage LÀ database; nút này kết xuất
+          ra file để giữ bản sao ngoài localStorage (cache bị dọn là mất). */}
+      <div className="sidesection">
+        <h3>Database</h3>
+        <button
+          className="newchat"
+          disabled={danhSach.length === 0}
+          onClick={() => taiVe('khao-sat-database.txt', exportTxtDatabase())}
+        >
+          ⭳ khao-sat-database.txt
+        </button>
       </div>
 
       {/* R5 đòi log/trace trong repo. Không có backend nên phải xuất tay ra
