@@ -54,8 +54,10 @@ export async function runTurn(
         `${user}\n\n[NHẮC] Bạn vừa gán tầng này là "trieu_chung" — biểu hiện bề mặt, ` +
           'CHƯA nói vì sao — mà lại dừng. SAI: triệu chứng không phải điểm dừng, và còn ' +
           'dư tầng để đào. BẮT BUỘC đào tiếp, KHÔNG stop, KHÔNG chain_incomplete. Trả về ' +
-          `mode = "label", GIỮ nguyên node vừa gán, đặt next_question là một câu hỏi "vì sao" ` +
-          `bám vào chính lời họ: "${result.node.claim}".`,
+          'mode = "label", GIỮ nguyên node vừa gán, đặt next_question là MỘT câu hỏi đào tiếp ' +
+          `bám lời họ ("${result.node.claim}") — hỏi "vì sao" nếu còn nguyên nhân sâu hơn, ` +
+          'HOẶC hỏi tác động/mong muốn nếu đó đã là sự thật trung tính. Đừng hỏi "vì sao" một ' +
+          'sự thật không có nguyên nhân.',
       );
     }
 
