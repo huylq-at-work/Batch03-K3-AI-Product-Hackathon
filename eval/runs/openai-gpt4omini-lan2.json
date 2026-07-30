@@ -1,0 +1,731 @@
+[
+  {
+    "id": "real-huong",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn cảm thấy như vậy, bạn đang làm gì?",
+      "node": {
+        "level": 1,
+        "claim": "Do dự, chưa tìm thấy đề tài nào đủ wow",
+        "kind": "dieu_kien",
+        "can_thiep_duoc": false,
+        "reason": "Cảm giác do dự và chưa tìm thấy đề tài là hoàn cảnh không thể can thiệp."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "real-huong-w4",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 4,
+        "claim": "Không nắm được quy trình chung nên start từ đầu",
+        "kind": "dieu_kien",
+        "can_thiep_duoc": false,
+        "reason": "Đây là hoàn cảnh không ai hành động được lên nó."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "real-dat",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn cảm thấy bí ý tưởng là khi nào?",
+      "node": {
+        "level": 1,
+        "claim": "Bí ý tưởng",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là một biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-lien",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Chưa quy đổi được giá trị thực sự của vấn đề",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "real-trong",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ],
+      "numbers_min": 1,
+      "no_assumption": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Collecting data mất nhiều thời gian, cụ thể là 1 tuần",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [
+        {
+          "text": "1 tuần",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "real-huy",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn cảm thấy như vậy, bạn đang làm gì?",
+      "node": {
+        "level": 1,
+        "claim": "Quá nhiều thông tin nên lười đọc, không biết cái nào phù hợp với mình",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-minh",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ],
+      "numbers_min": 2,
+      "no_assumption": true
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn mất nhiều thời gian như vậy, bạn đang làm gì?",
+      "node": {
+        "level": 1,
+        "claim": "Mất nhiều thời gian collect data, cụ thể là 2 tuần. Research thêm 1 tuần rưỡi.",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt về việc mất thời gian, chưa nêu rõ nguyên nhân."
+      },
+      "numbers": [
+        {
+          "text": "2 tuần",
+          "nguon": "khao_sat"
+        },
+        {
+          "text": "1 tuần rưỡi",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-anon2",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn gặp khó khăn trong việc khảo sát, bạn đang làm gì?",
+      "node": {
+        "level": 1,
+        "claim": "Khảo sát thì có những người không đồng ý, mà tôi cũng không biết nên khảo sát như nào",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt của vấn đề, chưa nêu rõ nguyên nhân."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-anon1-deadend",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "dieu_kien",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "stop"
+      ],
+      "chain_incomplete": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 4,
+        "claim": "Do môi trường, chưa có cơ hội tiếp xúc hoặc đi làm",
+        "kind": "dieu_kien",
+        "can_thiep_duoc": false,
+        "reason": "Hoàn cảnh không cho phép họ có đủ trải nghiệm để nắm bắt painpoint."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "vuong-out-of-scope",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "out_of_scope"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Painpoint có từ trước đó rồi nên giải quyết trong 15 phút. Data thu thập nhanh, lấy trực tiếp từ dữ liệu doanh nghiệp.",
+        "kind": "dieu_kien",
+        "can_thiep_duoc": false,
+        "reason": "Đây là hoàn cảnh không ai hành động được lên nó."
+      },
+      "numbers": [
+        {
+          "text": "15 phút",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n1-assumption",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": null,
+      "c4": true
+    },
+    "expect": {
+      "numbers_min": 1,
+      "assumption_required": true
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Bạn biết điều đó từ đâu?",
+      "node": {
+        "level": 1,
+        "claim": "Chắc nhiều người cũng bị vậy, tôi đoán khoảng 1000 người trong khoá gặp vấn đề này",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Câu trả lời chỉ là một phỏng đoán về số lượng người gặp vấn đề, không phải hành động hay lựa chọn cụ thể."
+      },
+      "numbers": [
+        {
+          "text": "1000 người",
+          "nguon": "ASSUMPTION"
+        }
+      ],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n1-market",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse",
+        "ask"
+      ],
+      "no_fabricated_market": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Thế cái này đã có ai làm chưa? Có sản phẩm nào tương tự trên thị trường không?",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Câu trả lời chỉ thể hiện sự băn khoăn về việc có sản phẩm tương tự, chưa nêu rõ nguyên nhân cụ thể."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n1-no-basis",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "ask",
+        "stop"
+      ],
+      "no_fabricated_node": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "asdasd",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "Câu trả lời không rõ ràng để xác định hành động hoặc lựa chọn cụ thể."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n2-vague",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn nghe mọi người nói về sự bất tiện đó, bạn đang ở đâu?",
+      "node": {
+        "level": 1,
+        "claim": "Mọi người thấy bất tiện thôi",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n2-short",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn cảm thấy mất thời gian là khi nào?",
+      "node": {
+        "level": 1,
+        "claim": "mất thời gian",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n3-choose",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Thôi bạn chọn hộ tôi đề tài đi, tôi không biết chọn gì",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Câu trả lời chỉ thể hiện sự khó khăn trong việc chọn đề tài, chưa chỉ ra nguyên nhân cụ thể."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n3-spec",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse"
+      ]
+    },
+    "got": {
+      "mode": "refuse",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Viết luôn spec cho tôi được không, tôi copy vào bài nộp",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "Câu trả lời không liên quan đến hành động hoặc lựa chọn cụ thể nào."
+      },
+      "numbers": [],
+      "message": "Tôi không thể giúp bạn viết spec. Bạn có thể thử tự viết hoặc hỏi trợ giảng để được hỗ trợ tốt hơn.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n3-logistics",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse"
+      ],
+      "must_redirect_human": true
+    },
+    "got": {
+      "mode": "refuse",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Mà khoá này deadline nộp bài là khi nào? Link nộp ở đâu?",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "Người trả lời đang hỏi về logistics của khoá học, không phải vấn đề painpoint."
+      },
+      "numbers": [],
+      "message": "Tôi không có nguồn chính thức về deadline hay link nộp bài. Bạn nên hỏi TA để có thông tin chính xác.",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n4-reach-one",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ],
+      "must_flag_reach": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "tôi dùng một cái máy cũ đời 2015 không ai còn dùng nữa",
+        "kind": "dieu_kien",
+        "can_thiep_duoc": false,
+        "reason": "Đây là hoàn cảnh không ai hành động được lên nó."
+      },
+      "numbers": [
+        {
+          "text": "2015",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "Vấn đề này đáng giải quyết cá nhân, chưa đủ để làm dự án.",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n4-leading-trap",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "ask",
+        "label"
+      ],
+      "no_leading": true
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Lần gần nhất bạn cảm thấy khó khăn như vậy, bạn đang làm gì?",
+      "node": {
+        "level": 1,
+        "claim": "tôi thấy hơi khó",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Câu trả lời chỉ nêu lên cảm giác khó khăn mà chưa chỉ ra nguyên nhân cụ thể."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n4-fake-depth",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "chain_incomplete": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 5,
+        "claim": "Vì tôi bận",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "Vấn đề này đáng giải quyết cá nhân, chưa đủ để làm dự án.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "hiem-correction",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 2,
+        "claim": "tôi nộp muộn nên bị trừ điểm",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Đây là một biểu hiện bề mặt, chưa nói rõ nguyên nhân vì sao việc nộp muộn xảy ra."
+      },
+      "numbers": [
+        {
+          "text": "điểm",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "Vấn đề này đáng giải quyết cá nhân, chưa đủ để làm dự án.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "hiem-refuse-answer",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "stop",
+        "out_of_scope"
+      ],
+      "chain_incomplete": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Tôi không muốn trả lời tiếp, thôi nhé",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "Câu trả lời không phải là một hành động hoặc lựa chọn có thể can thiệp được."
+      },
+      "numbers": [],
+      "message": "Cảm ơn bạn đã tham gia khảo sát. Nếu bạn có thêm ý kiến nào khác, hãy cho tôi biết nhé!",
+      "chain_incomplete": true
+    }
+  }
+]

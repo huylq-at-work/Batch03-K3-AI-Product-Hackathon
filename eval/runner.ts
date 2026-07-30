@@ -80,18 +80,29 @@ function dim2(r: TurnResult): boolean {
   return (r.next_question.match(/\?/g) ?? []).length <= 1;
 }
 
-/** Chiều 3 — điều kiện dừng đúng. */
+/**
+ * Chiều 3 — điều kiện dừng đúng.
+ *
+ * Hai bất biến, cả hai đều bắt buộc:
+ *   (a) tới nguyên nhân can thiệp được  => PHẢI stop
+ *   (b) stop mà CHƯA tới gốc            => PHẢI khai chain_incomplete
+ *
+ * (b) là lỗ mình bỏ sót ở lượt chạy đầu: model dừng sớm, không khai
+ * chain_incomplete, mà vẫn được tính đạt. Đó đúng là kiểu "dừng cho xong"
+ * mà điều kiện dừng của spec tồn tại để chặn.
+ */
 function dim3(c: Case, r: TurnResult): boolean | null {
   const checksMode = c.expect.mode_in !== undefined;
   const checksIncomplete = c.expect.chain_incomplete !== undefined;
-  const rootInvariant = r.node?.can_thiep_duoc === true;
+  const reachedRoot = r.node?.can_thiep_duoc === true;
+  const stoppedShort = r.mode === 'stop' && !reachedRoot && !r.chain_incomplete;
 
-  if (!checksMode && !checksIncomplete && !rootInvariant) return null;
+  if (!checksMode && !checksIncomplete && !reachedRoot && r.mode !== 'stop') return null;
 
   if (checksMode && !c.expect.mode_in!.includes(r.mode)) return false;
   if (checksIncomplete && r.chain_incomplete !== c.expect.chain_incomplete) return false;
-  // Bất biến: tới nguyên nhân can thiệp được thì phải dừng.
-  if (rootInvariant && r.mode !== 'stop') return false;
+  if (reachedRoot && r.mode !== 'stop') return false; // (a)
+  if (stoppedShort) return false; // (b)
   return true;
 }
 
@@ -187,6 +198,13 @@ async function main(): Promise<void> {
   const provider = pickProvider(which);
   console.log(`Model: ${provider.label}\n`);
 
+  const raw: {
+    id: string;
+    dims: { c1: boolean | null; c2: boolean; c3: boolean | null; c4: boolean };
+    expect: Expect;
+    got: TurnResult | { error: string };
+  }[] = [];
+
   for (let i = 0; i < cases.length; i += 1) {
     const c = cases[i];
     const user = buildUserPrompt({
@@ -208,14 +226,23 @@ async function main(): Promise<void> {
       // Lỗi tính là fail ở cả 4 chiều — không được im lặng bỏ qua.
       rows.push(`| ${i + 1} | \`${c.id}\` | ${c.group} | ✗ | ✗ | ✗ | ✗ | LỖI | ${err} |`);
       for (const k of ['d1', 'd2', 'd3', 'd4'] as const) tally[k][1] += 1;
+      raw.push({
+        id: c.id,
+        dims: { c1: false, c2: false, c3: false, c4: false },
+        expect: c.expect,
+        got: { error: err },
+      });
       console.log(`${i + 1}/${cases.length} ${c.id} → LỖI: ${err}`);
       continue;
     }
 
+    const d = { c1: dim1(c, r), c2: dim2(r), c3: dim3(c, r), c4: dim4(c, r) };
+    raw.push({ id: c.id, dims: d, expect: c.expect, got: r });
+
     rows.push(
       `| ${i + 1} | \`${c.id}\` | ${c.group} ` +
-        `| ${mark(dim1(c, r), tally.d1)} | ${mark(dim2(r), tally.d2)} ` +
-        `| ${mark(dim3(c, r), tally.d3)} | ${mark(dim4(c, r), tally.d4)} ` +
+        `| ${mark(d.c1, tally.d1)} | ${mark(d.c2, tally.d2)} ` +
+        `| ${mark(d.c3, tally.d3)} | ${mark(d.c4, tally.d4)} ` +
         `| ${r.mode} | ${(c.note ?? '').slice(0, 70)} |`,
     );
     console.log(`${i + 1}/${cases.length} ${c.id} → ${r.mode}`);
@@ -258,7 +285,11 @@ async function main(): Promise<void> {
   mkdirSync(resolve(HERE, 'runs'), { recursive: true });
   const file = resolve(HERE, 'runs', `${which}-${label}.md`);
   writeFileSync(file, out, 'utf8');
-  console.log(`\n${out}\n→ ${file}`);
+  // Dump raw để chẩn đoán được từng case fail — guide §2.6 bước 1:
+  // "bắt đầu từ output thật", không phải từ tiêu chí trừu tượng.
+  const rawFile = resolve(HERE, 'runs', `${which}-${label}.json`);
+  writeFileSync(rawFile, JSON.stringify(raw, null, 2), 'utf8');
+  console.log(`\n${out}\n→ ${file}\n→ ${rawFile}`);
 }
 
 void main();
