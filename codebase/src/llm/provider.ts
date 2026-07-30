@@ -7,8 +7,13 @@ export interface LlmProvider {
   readonly label: string;
   /** true nếu là lời gọi AI THẬT (R5 đòi khai rõ phần nào mock). */
   readonly isReal: boolean;
-  /** Stage ★ — quyết định AI trung tâm. Không có tool, output ràng buộc schema. */
-  complete(system: string, user: string): Promise<TurnResult>;
+  /**
+   * Stage ★ — quyết định AI trung tâm. Không có tool, output ràng buộc schema.
+   * `onToken` (tuỳ chọn) = streaming: gọi cho từng mẩu của `next_question` khi nó
+   * hiện dần, để khảo sát chạy chữ giống box chat chính. Provider không hỗ trợ thì
+   * bỏ qua và trả một lần.
+   */
+  complete(system: string, user: string, onToken?: (mau: string) => void): Promise<TurnResult>;
   /**
    * Một lượt hội thoại CÓ TOOL, dùng cho cố vấn (tra catalog + tạo khảo sát).
    *

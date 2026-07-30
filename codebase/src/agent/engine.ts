@@ -24,6 +24,7 @@ export function isLeadingQuestion(q: string): boolean {
 export async function runTurn(
   provider: LlmProvider,
   input: TurnInput,
+  onToken?: (mau: string) => void,
 ): Promise<{ result: TurnResult; violations: string[] }> {
   const user = buildUserPrompt(input);
   const started = Date.now();
@@ -31,7 +32,18 @@ export async function runTurn(
   let result: TurnResult | null = null;
 
   try {
-    result = await provider.complete(SYSTEM_PROMPT, user);
+    result = await provider.complete(SYSTEM_PROMPT, user, onToken);
+
+    // #1 — RETRY khi mode cần câu hỏi mà next_question rỗng. Đây là lỗi làm khảo
+    // sát tắc giữa chừng (gpt-4o-mini qua structured output đôi khi để rỗng). Thử
+    // lại MỘT lần với lời nhắc; không stream lần retry để khỏi nhân đôi chữ đã hiện.
+    if ((result.mode === 'ask' || result.mode === 'label') && !result.next_question.trim()) {
+      result = await provider.complete(
+        SYSTEM_PROMPT,
+        `${user}\n\n[NHẮC] Lần trước bạn để next_question RỖNG. Với mode = ask hoặc label, ` +
+          'BẮT BUỘC có đúng một câu hỏi mở trong next_question. Đặt câu hỏi ngay.',
+      );
+    }
     raw = JSON.stringify(result);
   } catch (err) {
     pushTrace({

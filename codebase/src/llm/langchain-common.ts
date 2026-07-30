@@ -27,17 +27,42 @@ import { normalize } from './provider';
 import type { ToolDef, ToolLoopMsg } from '../agent/tool-loop';
 import type { TurnResult } from '../types';
 
-/** Stage ★ — output ràng buộc theo TURN_SCHEMA. `normalize` vẫn ép bất biến của spec. */
+/**
+ * Stage ★ — output ràng buộc theo TURN_SCHEMA. `normalize` vẫn ép bất biến của spec.
+ *
+ * Có `onToken` → streaming: `withStructuredOutput().stream()` yield object đang lớn
+ * dần; ta phát phần MỚI của `next_question` cho khảo sát chạy chữ. Không có onToken
+ * → invoke một phát (đường eval/mock đi lối này).
+ */
 export async function lcComplete(
   model: BaseChatModel,
   system: string,
   user: string,
+  onToken?: (mau: string) => void,
 ): Promise<TurnResult> {
   const structured = model.withStructuredOutput(TURN_SCHEMA as Record<string, unknown>, {
     name: 'turn',
   });
-  const res = await structured.invoke([new SystemMessage(system), new HumanMessage(user)]);
-  return normalize(res);
+  const msgs = [new SystemMessage(system), new HumanMessage(user)];
+
+  if (!onToken) return normalize(await structured.invoke(msgs));
+
+  let last: unknown = {};
+  let daPhat = ''; // phần next_question đã phát, để chỉ gửi mẩu MỚI
+  const stream = await structured.stream(msgs);
+  for await (const chunk of stream) {
+    last = chunk;
+    const nq = String((chunk as { next_question?: string })?.next_question ?? '');
+    // Object lớn dần: nq mở rộng daPhat → phát phần thêm. Nếu đổi khác hẳn (hiếm),
+    // cập nhật mốc mà không phát lại (tránh nhân đôi).
+    if (nq.length > daPhat.length && nq.startsWith(daPhat)) {
+      onToken(nq.slice(daPhat.length));
+      daPhat = nq;
+    } else if (nq && nq !== daPhat) {
+      daPhat = nq;
+    }
+  }
+  return normalize(last);
 }
 
 /** ToolLoopMsg (trung lập) → message LangChain. Một hàm cho mọi provider. */

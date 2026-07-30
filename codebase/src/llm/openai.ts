@@ -31,7 +31,7 @@ export function createOpenAiProvider(
   return {
     label: `OpenAI ${model}`,
     isReal: true,
-    complete: (system, user) => lcComplete(chat, system, user),
+    complete: (system, user, onToken) => lcComplete(chat, system, user, onToken),
     toolChat: (a) => lcToolChat(chat, a),
     webSearch: (cauHoi) => openAiWebSearch(apiKey, model, baseUrl, cauHoi),
   };

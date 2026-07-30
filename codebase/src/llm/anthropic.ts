@@ -24,7 +24,7 @@ export function createAnthropicProvider(apiKey: string, model: string): LlmProvi
   return {
     label: `Anthropic ${model}`,
     isReal: true,
-    complete: (system, user) => lcComplete(chat, system, user),
+    complete: (system, user, onToken) => lcComplete(chat, system, user, onToken),
     toolChat: (a) => lcToolChat(chat, a),
   };
 }

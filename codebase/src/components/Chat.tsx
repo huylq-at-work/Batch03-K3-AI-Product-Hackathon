@@ -22,6 +22,7 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
   const [chain, setChain] = useState<WhyNode[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [stream, setStream] = useState(''); // next_question đang chạy chữ
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState('');
   const [violations, setViolations] = useState<string[]>([]);
@@ -34,7 +35,7 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [msgs, busy]);
+  }, [msgs, busy, stream]);
 
   function persist(done: boolean) {
     transcripts.save({
@@ -74,15 +75,21 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
   async function turn(answer: string) {
     setBusy(true);
     setError('');
+    setStream('');
     try {
-      const { result, violations: v } = await runTurn(provider, {
-        agent,
-        chain,
-        lastQuestion: lastQuestion.current,
-        lastAnswer: answer,
-        // Câu trả lời trước → model tự thấy lạc đề lặp lại và tự huỷ nếu quá nhiều.
-        recentAnswers: turns.current.map((t) => t.a),
-      });
+      const { result, violations: v } = await runTurn(
+        provider,
+        {
+          agent,
+          chain,
+          lastQuestion: lastQuestion.current,
+          lastAnswer: answer,
+          // Câu trả lời trước → model tự thấy lạc đề lặp lại và tự huỷ nếu quá nhiều.
+          recentAnswers: turns.current.map((t) => t.a),
+        },
+        // Streaming: câu hỏi hiện dần như box chat chính.
+        (mau) => setStream((s) => s + mau),
+      );
       if (answer) turns.current = [...turns.current, { q: lastQuestion.current, a: answer, result }];
       apply(result, v);
       persist(
@@ -91,6 +98,7 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
+      setStream(''); // câu hỏi cuối đã nằm trong msgs
       setBusy(false);
     }
   }
@@ -152,7 +160,12 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
               <div className={`msg ${m.role}`}>{m.text}</div>
             </div>
           ))}
-          {busy && (
+          {stream && (
+            <div className="row-assistant">
+              <div className="msg agent">{stream}</div>
+            </div>
+          )}
+          {busy && !stream && (
             <div className="row-assistant">
               <div className="msg agent busy">đang nghĩ…</div>
             </div>

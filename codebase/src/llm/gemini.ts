@@ -23,7 +23,7 @@ export function createGeminiProvider(apiKey: string, model: string): LlmProvider
   return {
     label: `Gemini ${model}`,
     isReal: true,
-    complete: (system, user) => lcComplete(chat, system, user),
+    complete: (system, user, onToken) => lcComplete(chat, system, user, onToken),
     toolChat: (a) => lcToolChat(chat, a),
   };
 }
