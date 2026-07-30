@@ -34,9 +34,35 @@ export async function runTurn(
   try {
     result = await provider.complete(SYSTEM_PROMPT, user, onToken);
 
+    // #3 — RETRY khi BỎ CUỘC SỚM: stop ở một tầng `trieu_chung` mà vẫn còn dư tầng.
+    // trieu_chung theo định nghĩa là "chưa nói vì sao" → KHÔNG phải điểm dừng hợp lệ;
+    // phải đào tiếp "vì sao [claim]?". gpt-4o-mini hay tự stop+chain_incomplete ở một
+    // triệu chứng nông (vd trả lời "vì tôi chưa cancel subscription" → dừng, bỏ lỡ
+    // painpoint thật ở tầng sau). Chỉ chặn khi CÒN tầng (level < maxTurns) và đúng là
+    // triệu chứng — `dieu_kien` (ngõ cụt) hoặc đã đủ tầng vẫn được dừng bình thường.
+    // Ép bằng code chứ không nhồi prompt (prompt dài phản tác dụng với model yếu).
+    const nodeLevel = input.chain.length + 1;
+    if (
+      result.mode === 'stop' &&
+      result.node &&
+      result.node.kind === 'trieu_chung' &&
+      !result.node.can_thiep_duoc &&
+      nodeLevel < input.agent.maxTurns
+    ) {
+      result = await provider.complete(
+        SYSTEM_PROMPT,
+        `${user}\n\n[NHẮC] Bạn vừa gán tầng này là "trieu_chung" — biểu hiện bề mặt, ` +
+          'CHƯA nói vì sao — mà lại dừng. SAI: triệu chứng không phải điểm dừng, và còn ' +
+          'dư tầng để đào. BẮT BUỘC đào tiếp, KHÔNG stop, KHÔNG chain_incomplete. Trả về ' +
+          `mode = "label", GIỮ nguyên node vừa gán, đặt next_question là một câu hỏi "vì sao" ` +
+          `bám vào chính lời họ: "${result.node.claim}".`,
+      );
+    }
+
     // #1 — RETRY khi mode cần câu hỏi mà next_question rỗng. Đây là lỗi làm khảo
     // sát tắc giữa chừng (gpt-4o-mini qua structured output đôi khi để rỗng). Thử
     // lại MỘT lần với lời nhắc; không stream lần retry để khỏi nhân đôi chữ đã hiện.
+    // Đặt SAU #3 để nếu #3 trả về ask/label mà quên câu hỏi thì vẫn được vá.
     if ((result.mode === 'ask' || result.mode === 'label') && !result.next_question.trim()) {
       result = await provider.complete(
         SYSTEM_PROMPT,
