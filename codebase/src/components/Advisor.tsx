@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ADVISOR_SYSTEM_PROMPT,
   advisorTools,
-  CAP_DAO_5WHY,
   datHamWebSearch,
   deTaiToolsDisabled,
 } from '../agent/tools';
-import { duocTaoKhaoSat, kiemDauRa, kiemDauVao, type ViPham } from '../agent/guard';
+import { kiemDauRa, kiemDauVao, type ViPham } from '../agent/guard';
 import { timTenRiengKhongNguon } from '../agent/kiem-nguon';
 import { ketQuaTool, runToolLoop, type ToolLoopMsg } from '../agent/tool-loop';
 import { resolveProvider } from '../llm';
@@ -69,13 +68,12 @@ const MO_DAU =
 
 /** Câu chào mở đầu mỗi cuộc tư vấn. Nêu rõ mình giúp được GÌ, rồi hỏi họ muốn gì. */
 const LOI_CHAO =
-  'Chào bạn 👋 Mình là cố vấn giúp bạn tìm **painpoint thật** của đề tài capstone — ' +
-  'cái vấn đề khiến đề này đáng làm, chứ không dừng ở "khó" hay "mất thời gian".\n\n' +
-  'Mình giúp được: **chọn/hiểu đề tài** (tra được 360 đề trong catalog) · **đào 5-why** ' +
-  'để ra painpoint · **dựng khảo sát** để bạn gửi người khác lấy bằng chứng · gợi ý ' +
-  '**persona, chỗ cần AI, và MVP**.\n\n' +
-  'Bạn muốn mình giúp gì? Nếu chưa rõ, cứ nói bạn đang xét đề nào (VD: EDU-01) — ' +
-  'hoặc "mình chưa có đề nào" cũng được.';
+  'Chào bạn 👋 Mình giúp bạn tìm **painpoint thật** cho đề tài capstone.\n\n' +
+  'Cách làm: bạn cho mình **đề tài** → mình **research** miền đó để tìm vài painpoint ' +
+  'ứng viên có thật → mình dựng một **khảo sát 5-why** về đề tài. Bạn trả lời thử trước ' +
+  '(tính là phản hồi đầu tiên), rồi gửi link cho người khác — painpoint lộ ra từ dữ liệu ' +
+  'thật, không phải mình đoán.\n\n' +
+  'Bạn đang xét đề nào? Cho mình mã đề (VD: FIN-05) hoặc lĩnh vực bạn quan tâm.';
 
 export function Advisor({
   ownerId,
@@ -90,7 +88,6 @@ export function Advisor({
   const [busy, setBusy] = useState(false);
   const [dangLam, setDangLam] = useState('');
   const [error, setError] = useState('');
-  const [nhap, setNhap] = useState<Nhap | null>(null);
   const [viPham, setViPham] = useState<ViPham[]>([]);
   // Text đang stream về (hiện dần trong lúc chờ). Xoá khi lượt xong.
   const [stream, setStream] = useState('');
@@ -137,42 +134,34 @@ export function Advisor({
     setError('');
     setViPham([]);
     const next: ToolLoopMsg[] = [...messages, { role: 'user', text }];
-    const soLuot = next.filter((m) => m.role === 'user').length;
-    // Đã tạo khảo sát trong phiên chưa → quyết định PHA: web_search chỉ mở sau khi
-    // tạo khảo sát (pha leverage/MVP), không mở lúc còn đào 5-why.
-    const daTaoKhaoSat = next.some(
-      (m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'tao_khao_sat'),
-    );
-    // Ép cứng chống hỏi-why-vô-hạn: quá CAP lượt mà chưa tạo khảo sát → buộc gọi
-    // tao_khao_sat. Prompt có luật dừng nhưng model bỏ qua khi hội thoại dài.
-    const epChotKhaoSat = !daTaoKhaoSat && soLuot >= CAP_DAO_5WHY;
     setMessages(next);
     setBusy(true);
     setStream('');
     setDangLam('đang suy nghĩ…');
 
-    // Directive động ghép vào cuối system prompt. Ép cứng cái prompt tĩnh không giữ.
-    let chiThi = '';
-    if (epChotKhaoSat) {
-      chiThi =
-        '\n\n# BẮT BUỘC LƯỢT NÀY\nĐã đào đủ 5 lượt. DỪNG hỏi "vì sao". Chốt painpoint SÂU NHẤT đã đạt (nói rõ nếu chuỗi chưa hoàn chỉnh) và gọi `tao_khao_sat` NGAY trong lượt này. Không hỏi thêm câu why nào nữa.';
-    } else if (!daTaoKhaoSat && soLuot === 2) {
-      // Lượt đào đầu tiên: model hay quên giải thích 5-why. Ép nói một lần.
-      chiThi =
-        '\n\n# BẮT BUỘC LƯỢT NÀY\nĐây là lần đầu bạn hỏi "vì sao". TRƯỚC câu hỏi, PHẢI nói một câu giải thích: đây là kỹ thuật 5-why, bạn sẽ hỏi "vì sao" vài lần liên tiếp để tìm nguyên nhân gốc, mong người dùng kiên nhẫn, không rõ thì cứ nói để dừng. Rồi mới hỏi câu why đầu tiên.';
-    }
-
-    // web_search: chỉ ép khi ĐÃ ở pha sau-khảo-sát và chưa tra lần nào.
-    const chuaTraWeb = !next.some(
+    // Luồng: nhận đề tài → RESEARCH (web) → tạo khảo sát. Đề tài đã tra chưa /
+    // đã research chưa / đã tạo khảo sát chưa — suy từ lịch sử tool.
+    const daXemDeTai = next.some(
+      (m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'xem_de_tai'),
+    );
+    const daResearch = next.some(
       (m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'web_search'),
     );
+    const daTaoKhaoSat = next.some(
+      (m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'tao_khao_sat'),
+    );
+
+    // Ép thứ tự bằng tool_choice (prompt tĩnh không giữ được với gpt-4o-mini):
+    //  - đã biết đề tài mà CHƯA research → buộc web_search
+    //  - đã research mà CHƯA tạo khảo sát → buộc tao_khao_sat
+    const epGoi =
+      daXemDeTai && !daResearch ? 'web_search' : daResearch && !daTaoKhaoSat ? 'tao_khao_sat' : undefined;
 
     try {
       const r = await runToolLoop({
         chat: provider.toolChat,
-        system: ADVISOR_SYSTEM_PROMPT + chiThi,
-        // web_search chỉ có sau khi đã tạo khảo sát (pha leverage/MVP). Xem advisorTools().
-        tools: advisorTools(daTaoKhaoSat) as never,
+        system: ADVISOR_SYSTEM_PROMPT,
+        tools: advisorTools() as never,
         messages: next,
         // Streaming: mỗi mẩu text hiện dần. Vòng gọi tool không có text nên im;
         // vòng trả lời cuối thì chữ chạy ra.
@@ -180,13 +169,7 @@ export function Advisor({
           setDangLam('');
           setStream((s) => s + mau);
         },
-        // Ép cứng: hết cap thì buộc tạo khảo sát; ở pha leverage thì buộc tra web
-        // một lần (prompt "bắt buộc" đã thua nhiều lần, model viết từ trí nhớ).
-        epGoi: epChotKhaoSat
-          ? 'tao_khao_sat'
-          : daTaoKhaoSat && chuaTraWeb
-            ? 'web_search'
-            : undefined,
+        epGoi,
       });
       setMessages(r.messages);
 
@@ -201,10 +184,10 @@ export function Advisor({
         .join(' ');
       const vp = kiemDauRa(r.text, toolText, loiNguoiDung);
 
-      // Kiểm tên riêng bằng model (không regex) — chỉ từ lượt 4, vì đó là pha
-      // persona/leverage/MVP nơi lỗi bịa xảy ra, và mỗi lần kiểm là một lời gọi
-      // API thật (~1-2s). Ba lượt đào 5-why đầu không đáng trả giá đó.
-      if (soLuot >= 4 && provider.toolChat && r.text.trim()) {
+      // Kiểm tên riêng bằng model (không regex) — chỉ khi đã có text và đã research
+      // (pha nêu painpoint ứng viên là nơi lỗi bịa tên xảy ra). Mỗi lần kiểm là một
+      // lời gọi API ~1-2s nên không chạy ở mọi lượt.
+      if (daResearch && provider.toolChat && r.text.trim()) {
         setDangLam('đang kiểm nguồn…');
         const ten = await timTenRiengKhongNguon(
           provider.toolChat,
@@ -220,16 +203,14 @@ export function Advisor({
       }
       setViPham(vp);
 
+      // Auto-tạo khảo sát: người dùng KHÔNG phải bấm nút hay hiểu cơ chế. Khi
+      // tao_khao_sat trả bản nháp, tạo luôn và đưa người tạo VÀO khảo sát (họ là
+      // phản hồi #1). onCreated → App mở Chat.tsx cho agent này.
       const d = ketQuaTool<Nhap>(r.calls, 'tao_khao_sat', (res) => {
         const o = res as { can_xac_nhan?: boolean; nhap?: Nhap };
         return o?.can_xac_nhan && o.nhap ? o.nhap : undefined;
       });
-      if (d) {
-        // Cổng tool GHI: chặn tạo khảo sát khi hội thoại còn quá ngắn.
-        const cong = duocTaoKhaoSat(next.filter((m) => m.role === 'user').length);
-        if (cong.chan) setError(cong.loi_nhan ?? '');
-        else setNhap(d);
-      }
+      if (d) taoNgay(d);
 
       if (r.het_vong) {
         setError('Cố vấn gọi tool quá nhiều vòng nên bị dừng. Thử hỏi lại cụ thể hơn.');
@@ -243,32 +224,26 @@ export function Advisor({
     }
   }
 
-  /** Người dùng bấm xác nhận → giờ mới ghi. Tool cố tình không tự ghi. */
-  function taoThat(): void {
-    if (!nhap) return;
+  /**
+   * Tự tạo khảo sát ngay khi tool trả bản nháp — người dùng không phải bấm nút.
+   * onCreated → App mở Chat.tsx cho agent này, tức là người TẠO được đưa thẳng vào
+   * khảo sát của chính mình làm phản hồi #1.
+   */
+  function taoNgay(d: Nhap): void {
     const luc = Date.now();
     const a: SubAgent = {
       id: newId('a'),
       ownerId,
-      name: nhap.ten,
-      topic: nhap.chu_de,
-      personaIn: nhap.persona_in,
-      visibility: nhap.cong_khai ? 'public' : 'private',
+      name: d.ten,
+      topic: d.chu_de,
+      personaIn: d.persona_in,
+      visibility: d.cong_khai ? 'public' : 'private',
       createdAt: luc,
-      maxTurns: nhap.so_tang,
+      maxTurns: d.so_tang,
       expiresAt: luc + HAN_LINK_MS, // link sống 24h, gia hạn được ở sidebar
     };
     agents.save(a);
-    setNhap(null);
     onCreated(a);
-    // Cho model biết đã tạo, để lượt sau nó không tạo lại. Không gọi API ở đây.
-    setMessages((m) => [
-      ...m,
-      {
-        role: 'user',
-        text: `[hệ thống] Người dùng đã xác nhận. Khảo sát "${a.name}" đã tạo, link #/s/${a.id}. Đừng tạo lại.`,
-      },
-    ]);
   }
 
   // Ẩn `tool_results` (JSON thô, người dùng không cần) và các ghi chú [hệ thống]
@@ -329,32 +304,6 @@ export function Advisor({
           </div>
         )}
 
-        {nhap && (
-          <div className="draft">
-            <h3>Bản nháp khảo sát</h3>
-            <p className="muted small">
-              Cố vấn đã dựng bản nháp. Chưa lưu gì — xem lại rồi bấm tạo. Sửa được sau khi tạo.
-            </p>
-            <dl>
-              <dt>Tên</dt>
-              <dd>{nhap.ten}</dd>
-              <dt>Hỏi về</dt>
-              <dd>{nhap.chu_de}</dd>
-              <dt>Hỏi ai</dt>
-              <dd>{nhap.persona_in}</dd>
-              <dt>Số tầng</dt>
-              <dd>
-                {nhap.so_tang} · {nhap.cong_khai ? 'public' : 'private'}
-              </dd>
-            </dl>
-            <div className="row">
-              <button className="primary" onClick={taoThat}>
-                Tạo khảo sát
-              </button>
-              <button onClick={() => setNhap(null)}>Bỏ</button>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="composer">
