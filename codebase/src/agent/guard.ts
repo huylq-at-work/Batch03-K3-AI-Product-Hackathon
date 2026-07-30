@@ -98,7 +98,7 @@ export function kiemDauVao(text: string): KetQuaChan {
 }
 
 export interface ViPham {
-  loai: 'ma_de_tai_chua_tra' | 'so_khong_nguon';
+  loai: 'ma_de_tai_chua_tra' | 'so_khong_nguon' | 'ten_rieng_khong_nguon';
   chi_tiet: string;
 }
 

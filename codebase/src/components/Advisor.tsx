@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ADVISOR_SYSTEM_PROMPT,
-  ADVISOR_TOOLS,
-  datHamTimWeb,
+  advisorTools,
+  datHamWebSearch,
+  datSoLuot,
   deTaiToolsDisabled,
 } from '../agent/tools';
 import { duocTaoKhaoSat, kiemDauRa, kiemDauVao, type ViPham } from '../agent/guard';
+import { timTenRiengKhongNguon } from '../agent/kiem-nguon';
 import { ketQuaTool, runToolLoop, type ToolLoopMsg } from '../agent/tool-loop';
 import { resolveProvider } from '../llm';
 import { agents, newId } from '../store/db';
@@ -28,7 +30,7 @@ const provider = resolveProvider();
 // Cấp hàm tra web cho `runTool`. Làm ở đây để tools.ts không phải import llm/
 // (tránh vòng phụ thuộc). Provider không tra web được thì set null, và tool sẽ
 // trả {error} để agent nói rõ là chưa nghiên cứu được.
-datHamTimWeb(provider.timWeb ? (q) => provider.timWeb!(q) : null);
+datHamWebSearch(provider.webSearch ? (q) => provider.webSearch!(q) : null);
 
 /** Bản nháp khảo sát do tool `tao_khao_sat` trả về. Chưa lưu gì cả. */
 interface Nhap {
@@ -94,6 +96,9 @@ export function Advisor({
     setError('');
     setViPham([]);
     const next: ToolLoopMsg[] = [...messages, { role: 'user', text }];
+    // Cấp số lượt cho cổng thứ tự tool (web_search chỉ mở từ lượt 4).
+    const soLuot = next.filter((m) => m.role === 'user').length;
+    datSoLuot(soLuot);
     setMessages(next);
     setBusy(true);
     setDangLam('đang suy nghĩ…');
@@ -102,7 +107,8 @@ export function Advisor({
       const r = await runToolLoop({
         chat: provider.toolChat,
         system: ADVISOR_SYSTEM_PROMPT,
-        tools: ADVISOR_TOOLS,
+        // Theo số lượt: web_search bị ẩn trước lượt 4. Xem advisorTools().
+        tools: advisorTools(soLuot) as never,
         messages: next,
       });
       setMessages(r.messages);
@@ -116,7 +122,26 @@ export function Advisor({
         .filter((m): m is { role: 'user'; text: string } => m.role === 'user')
         .map((m) => m.text)
         .join(' ');
-      setViPham(kiemDauRa(r.text, toolText, loiNguoiDung));
+      const vp = kiemDauRa(r.text, toolText, loiNguoiDung);
+
+      // Kiểm tên riêng bằng model (không regex) — chỉ từ lượt 4, vì đó là pha
+      // persona/leverage/MVP nơi lỗi bịa xảy ra, và mỗi lần kiểm là một lời gọi
+      // API thật (~1-2s). Ba lượt đào 5-why đầu không đáng trả giá đó.
+      if (soLuot >= 4 && provider.toolChat && r.text.trim()) {
+        setDangLam('đang kiểm nguồn…');
+        const ten = await timTenRiengKhongNguon(
+          provider.toolChat,
+          r.text,
+          `${loiNguoiDung}\n${toolText}`,
+        );
+        for (const t of ten) {
+          vp.push({
+            loai: 'ten_rieng_khong_nguon',
+            chi_tiet: `Tên "${t}" không có trong lời bạn nói cũng không có trong kết quả tra cứu — có thể agent tự suy diễn.`,
+          });
+        }
+      }
+      setViPham(vp);
 
       const d = ketQuaTool<Nhap>(r.calls, 'tao_khao_sat', (res) => {
         const o = res as { can_xac_nhan?: boolean; nhap?: Nhap };
@@ -300,7 +325,7 @@ function nhanTool(name: string): string {
       return 'đang tìm đề tài';
     case 'xem_de_tai':
       return 'đang đọc mô tả đề tài';
-    case 'tim_web':
+    case 'web_search':
       return 'đang tra web';
     case 'tao_khao_sat':
       return 'đang dựng khảo sát';

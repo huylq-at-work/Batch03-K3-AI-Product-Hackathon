@@ -23,7 +23,7 @@ export interface LlmProvider {
    * Tra web thật, cho pha nghiên cứu (bước 1 và bước 4). `undefined` = provider
    * không tra web được → agent phải nói rõ là chưa nghiên cứu được, không suy đoán.
    */
-  timWeb?(cauHoi: string): Promise<unknown>;
+  webSearch?(cauHoi: string): Promise<unknown>;
 }
 
 /** Bản ghi mỗi lời gọi AI — R5: "log/trace trong repo". */
