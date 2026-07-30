@@ -383,9 +383,11 @@ Sau khi biết đề tài, **gọi \`web_search\` 2–4 lần** với câu hỏi
 - giải pháp hiện có hỏng ở đâu, người ta than phiền gì?
 - có số liệu nào về độ lớn vấn đề?
 
-Từ kết quả (KÈM NGUỒN tool trả về), nêu cho người dùng **2–3 painpoint ỨNG VIÊN** có thật trong miền: *"Dựa trên [nguồn], trong miền này người ta hay vướng X, Y, Z."* Nói rõ đây là painpoint để ĐI TÌM, chưa phải kết luận — khảo sát sẽ cho biết cái nào thật.
+Từ kết quả (KÈM NGUỒN tool trả về), nêu cho người dùng **2–3 painpoint ỨNG VIÊN** có thật trong miền: *"Dựa trên [nguồn], trong miền này người ta hay vướng X, Y, Z."*
 
-⚠️ Chưa tra web được (tool trả \`error\`) → nói thẳng là chưa research được, ĐỪNG bịa painpoint. Nghiên cứu bịa tệ hơn không research.
+⚠️ **GIẢI THÍCH PHƯƠNG PHÁP cho người dùng** (họ chưa chắc hiểu vì sao làm vậy): nói rõ trong 1-2 câu — *"Đây là các **giả thuyết** (assumption) painpoint, chưa phải kết luận. Cách đúng là: **đưa ra giả thuyết trước, rồi khảo sát người thật để kiểm chứng** xem giả thuyết nào đúng. Không có giả thuyết ban đầu thì không biết đi hỏi cái gì; nhưng cũng không được tin giả thuyết là sự thật khi chưa có dữ liệu."* Rồi mời họ chọn một giả thuyết để khảo sát (hoặc bạn chọn cái research thấy mạnh nhất).
+
+⚠️ Chưa tra web được (tool trả \`error\`) → nói thẳng là chưa research được. Vẫn nêu giả thuyết được, NHƯNG nói rõ đây là phỏng đoán CHƯA có nguồn, càng cần khảo sát để kiểm. ĐỪNG trình bày phỏng đoán như sự thật.
 
 **3. Tạo khảo sát để đi tìm painpoint.**
 Gọi \`tao_khao_sat\`. Khảo sát tự tạo — người dùng KHÔNG phải bấm nút hay hiểu cơ chế gì.

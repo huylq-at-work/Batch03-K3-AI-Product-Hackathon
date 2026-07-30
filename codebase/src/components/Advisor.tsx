@@ -112,9 +112,13 @@ const LOI_CHAO =
 export function Advisor({
   ownerId,
   onCreated,
+  onOpen,
 }: {
   ownerId: string;
+  /** Gọi khi tạo khảo sát — để sidebar cập nhật. KHÔNG chuyển trang. */
   onCreated: (a: SubAgent) => void;
+  /** Chuyển sang trang trả lời khảo sát — chỉ gọi khi người dùng BẤM thẻ. */
+  onOpen: (a: SubAgent) => void;
 }) {
   // Nạp lại hội thoại cũ của user này (session persistence).
   const [messages, setMessages] = useState<ToolLoopMsg[]>(() => napPhien(ownerId));
@@ -125,6 +129,10 @@ export function Advisor({
   const [viPham, setViPham] = useState<ViPham[]>([]);
   // Text đang stream về (hiện dần trong lúc chờ). Xoá khi lượt xong.
   const [stream, setStream] = useState('');
+  // Nút "hiện thinking": mở ra thì thấy chi tiết mọi tool call + kết quả.
+  const [hienThinking, setHienThinking] = useState(false);
+  // Khảo sát vừa tạo → hiện THẺ (không tự chuyển trang). Bấm thẻ mới sang.
+  const [khaoSatMoi, setKhaoSatMoi] = useState<SubAgent | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
 
   // Cấp hàm đọc kết quả khảo sát cho tool `tong_hop_khao_sat` — cần ownerId nên
@@ -266,9 +274,9 @@ export function Advisor({
   }
 
   /**
-   * Tự tạo khảo sát ngay khi tool trả bản nháp — người dùng không phải bấm nút.
-   * onCreated → App mở Chat.tsx cho agent này, tức là người TẠO được đưa thẳng vào
-   * khảo sát của chính mình làm phản hồi #1.
+   * Tạo khảo sát ngay khi tool trả bản nháp (người dùng không phải bấm nút xác
+   * nhận). Nhưng KHÔNG tự chuyển trang — hiện một THẺ để người dùng biết chuyện gì
+   * đang xảy ra; họ bấm thẻ mới sang trang trả lời. onCreated chỉ để sidebar cập nhật.
    */
   function taoNgay(d: Nhap): void {
     const luc = Date.now();
@@ -285,6 +293,12 @@ export function Advisor({
     };
     agents.save(a);
     onCreated(a);
+    setKhaoSatMoi(a);
+    // Cho model biết đã tạo, để lượt sau không tạo lại. Không gọi API ở đây.
+    setMessages((m) => [
+      ...m,
+      { role: 'user', text: `[hệ thống] Đã tạo khảo sát "${a.name}". Đừng tạo lại.` },
+    ]);
   }
 
   // Ẩn `tool_results` (JSON thô, người dùng không cần) và các ghi chú [hệ thống]
@@ -293,6 +307,19 @@ export function Advisor({
     (m): m is Exclude<ToolLoopMsg, { role: 'tool_results' }> =>
       m.role !== 'tool_results' && !(m.role === 'user' && m.text.startsWith('[hệ thống]')),
   );
+
+  // Map tool_call id → kết quả (để dropdown web_search lấy nguồn, và thinking hiện đủ).
+  const ketQuaTheoId = new Map<string, unknown>();
+  for (const m of messages) {
+    if (m.role !== 'tool_results') continue;
+    for (const r of m.results) {
+      try {
+        ketQuaTheoId.set(r.id, JSON.parse(r.content));
+      } catch {
+        ketQuaTheoId.set(r.id, r.content);
+      }
+    }
+  }
 
   return (
     <div className="thread">
@@ -313,14 +340,23 @@ export function Advisor({
 
         {hienThi.map((m, i) =>
           m.role === 'tool_calls' ? (
-            <div className="toolchip" key={i}>
-              {m.calls.map((c) => nhanTool(c.name)).join(' · ')}
-            </div>
+            <ToolCalls key={i} calls={m.calls} ketQua={ketQuaTheoId} thinking={hienThinking} />
           ) : (
             <div className={`msg ${m.role}`} key={i}>
               <Dam text={m.text} />
             </div>
           ),
+        )}
+
+        {/* Thẻ khảo sát vừa tạo — KHÔNG tự chuyển trang. Người dùng bấm mới sang,
+            để họ biết chuyện gì đang xảy ra. */}
+        {khaoSatMoi && (
+          <button className="ksCard" onClick={() => onOpen(khaoSatMoi)}>
+            <div className="ksCardTop">📋 Khảo sát đã sẵn sàng</div>
+            <div className="ksCardName">{khaoSatMoi.name}</div>
+            <div className="muted small">{khaoSatMoi.topic}</div>
+            <div className="ksCardGo">Bấm để trả lời thử (bạn là phản hồi #1) →</div>
+          </button>
         )}
 
         {/* Bong bóng đang stream: chữ chạy ra dần. dangLam hiện khi chưa có mẩu nào. */}
@@ -366,9 +402,77 @@ export function Advisor({
         </button>
       </div>
       <p className="muted small center">
-        Cố vấn chỉ nói về đề tài mà tool tra được. Nó không tra thị trường hay đối thủ.
+        Cố vấn chỉ nói về đề tài mà tool tra được ·{' '}
+        <button className="linkbtn" onClick={() => setHienThinking((v) => !v)}>
+          {hienThinking ? 'ẩn thinking' : 'hiện thinking'}
+        </button>
       </p>
     </div>
+  );
+}
+
+/**
+ * Hiện tool call. Mặc định:
+ *   - web_search → dropdown các NGUỒN đã tra (output), không hiện tên hàm.
+ *   - tool chọc DB → ẩn hoàn toàn.
+ * Bật "thinking" → hiện đủ mọi tool (tên + input + kết quả) để minh bạch.
+ */
+function ToolCalls({
+  calls,
+  ketQua,
+  thinking,
+}: {
+  calls: { id: string; name: string; input: Record<string, unknown> }[];
+  ketQua: Map<string, unknown>;
+  thinking: boolean;
+}) {
+  if (thinking) {
+    return (
+      <details className="thinking" open>
+        <summary>thinking · {calls.map((c) => c.name).join(', ')}</summary>
+        {calls.map((c, i) => (
+          <div key={i} className="thinkingItem">
+            <code>{c.name}({JSON.stringify(c.input)})</code>
+            <pre>{JSON.stringify(ketQua.get(c.id), null, 1)?.slice(0, 1200)}</pre>
+          </div>
+        ))}
+      </details>
+    );
+  }
+
+  const webs = calls.filter((c) => c.name === 'web_search');
+  if (webs.length === 0) return null; // các tool DB: ẩn
+
+  // Gom nguồn từ mọi lần web_search trong lượt.
+  const nguon = webs.flatMap((c) => {
+    const r = ketQua.get(c.id) as { nguon?: string[] } | undefined;
+    return r?.nguon ?? [];
+  });
+  const host = (u: string) => {
+    try {
+      return new URL(u).hostname.replace(/^www\./, '');
+    } catch {
+      return u;
+    }
+  };
+
+  return (
+    <details className="websrc">
+      <summary>🔎 Đã tra web{nguon.length ? ` · ${nguon.length} nguồn` : ''}</summary>
+      {nguon.length === 0 ? (
+        <div className="muted small">Không có nguồn cụ thể cho lần tra này.</div>
+      ) : (
+        <ul>
+          {[...new Set(nguon)].map((u, i) => (
+            <li key={i}>
+              <a href={u} target="_blank" rel="noreferrer">
+                {host(u)}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
   );
 }
 
@@ -389,20 +493,3 @@ function Dam({ text }: { text: string }) {
   );
 }
 
-/** Tên tool cho người đọc — người dùng không cần biết tên hàm. */
-function nhanTool(name: string): string {
-  switch (name) {
-    case 'liet_ke_khoi':
-      return 'đang xem các khối đề tài';
-    case 'tim_de_tai':
-      return 'đang tìm đề tài';
-    case 'xem_de_tai':
-      return 'đang đọc mô tả đề tài';
-    case 'web_search':
-      return 'đang tra web';
-    case 'tao_khao_sat':
-      return 'đang dựng khảo sát';
-    default:
-      return name;
-  }
-}

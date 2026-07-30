@@ -173,10 +173,8 @@ function Shell() {
           <Advisor
             key={phienMoi}
             ownerId={user.id}
-            onCreated={(a) => {
-              lamMoi();
-              setOpen(a);
-            }}
+            onCreated={() => lamMoi()}
+            onOpen={setOpen}
           />
         )}
       </main>
