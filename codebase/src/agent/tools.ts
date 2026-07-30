@@ -122,12 +122,22 @@ export const TAO_KHAO_SAT_TOOL = {
       chu_de: {
         type: 'string',
         description:
-          'Vấn đề cần đào, viết theo góc nhìn NGƯỜI TRẢ LỜI. ' +
-          'Không nhắc kết luận của người dùng — nhắc là mớm đáp án.',
+          'MIỀN VẤN ĐỀ để người trả lời tự nhớ lại trải nghiệm của HỌ — mục tiêu là TÌM ' +
+          'painpoint trong nhiều người, không xoay quanh sự việc riêng của người dùng. ' +
+          'Viết chung để nhiều người thấy mình trong đó, nhưng cụ thể về loại trải nghiệm. ' +
+          'TỐT: "bị tính một khoản phí trên ví điện tử mà không lường trước, và cách xử lý lúc đó". ' +
+          'XẤU (xoay quanh người dùng): "vì sao bạn không rõ nguyên nhân tự động gia hạn" — đó là ' +
+          'trạng thái riêng của người dùng + giả thuyết chưa kiểm chứng. ' +
+          'KHÔNG nhét chi tiết riêng của người dùng (số tiền, tên app cụ thể), KHÔNG nhét giả ' +
+          'thuyết/kết luận của họ, KHÔNG mớm đáp án.',
       },
       persona_in: {
         type: 'string',
-        description: 'Nhóm người sẽ trả lời, cụ thể. VD: "SV VinUni K3/K4 đang chọn đề tài".',
+        description:
+          'Nhóm người TỪNG GẶP vấn đề trong chu_de — suy từ MIỀN của đề tài, không mặc định là ' +
+          'sinh viên. Đề về ví điện tử → "người dùng ví điện tử từng bị tính phí bất ngờ"; đề về ' +
+          'LMS → "sinh viên dùng nhiều hệ thống nộp bài". Người trả lời phải là người CÓ trải ' +
+          'nghiệm đó thì mới đào được 5-why.',
       },
       so_tang: { type: 'integer', description: 'Số tầng why tối đa, 3–7. Mặc định 5.' },
       cong_khai: {
@@ -378,7 +388,10 @@ Bạn KHÔNG hỏi "vì sao" mãi. Dừng NGAY khi gặp **bất kỳ** điều 
 **3b. Tạo khảo sát để lấy bằng chứng.** Painpoint mới chỉ là của một người. Giải thích cho họ: cần hỏi thêm người khác mới biết đây là vấn đề chung hay chỉ riêng họ. Rồi **gọi \`tao_khao_sat\` NGAY TRONG CÙNG LƯỢT bạn vừa gán nhãn nguyên nhân** — ngay sau câu phát biểu painpoint, **đừng chờ người dùng xác nhận, đừng hỏi thêm câu nào trước đó**. Tool chỉ tạo bản nháp nên gọi "sớm" không có rủi ro gì; không gọi mới là lỗi, vì người dùng sẽ không bao giờ thấy nút tạo khảo sát.
 
 ⚠️ **TỰ suy ra tham số từ hội thoại. TUYỆT ĐỐI KHÔNG hỏi người dùng "bạn muốn hỏi về gì, hỏi ai".** Bạn vừa đào 5-why với họ xong — bạn đã biết. Hỏi lại là bắt họ điền form, đúng thứ công cụ này tồn tại để loại bỏ. Họ sẽ xem bản nháp và sửa được, nên đoán chưa hoàn hảo cũng cứ gọi.
-- \`chu_de\`: vấn đề ở tầng **triệu chứng** (tầng đầu, cái người trả lời tự thấy), viết theo góc nhìn NGƯỜI TRẢ LỜI. **Không nhắc nguyên nhân bạn vừa tìm ra** — nhắc là mớm đáp án, và cả bộ bằng chứng thành vô giá trị.
+- \`chu_de\`: **MIỀN VẤN ĐỀ chung để người khác tự nhớ lại lần của HỌ** — mục tiêu là TÌM painpoint ở nhiều người, KHÔNG xoay quanh sự việc riêng của người dùng này. Người dùng vừa kể là *một ca cụ thể*; \`chu_de\` phải trừu tượng lên thành *loại trải nghiệm* mà nhiều người gặp.
+  - Người dùng: "tôi bị charge 50\$ cho phần mềm pdf sau 1 tuần dùng thử" → \`chu_de\` TỐT: "bị tính một khoản phí trên ví/app mà bạn không lường trước, và bạn đã xử lý thế nào". \`chu_de\` XẤU: "vì sao bạn không rõ nguyên nhân tự động gia hạn" (bám trạng thái bối rối + giả thuyết chưa chắc của riêng người dùng).
+  - **Đặc biệt khi chuỗi của người dùng ngắn hoặc họ nói "không biết":** ĐỪNG lấy phỏng đoán chưa kiểm chứng của họ làm chủ đề. Lùi về miền vấn đề quan sát được (cái đã XẢY RA: bị tính phí bất ngờ), để người khác kể painpoint của họ — đó chính là lý do phải đi khảo sát.
+  - KHÔNG nhét chi tiết riêng (số tiền, tên app), KHÔNG nhét nguyên nhân/giả thuyết, KHÔNG mớm đáp án.
 - \`persona_in\`: nhóm người cụ thể, suy từ đề tài và từ những gì họ kể.
 
 Tool trả bản nháp, **chưa có link**. Nói họ bấm "Tạo khảo sát" — sau khi bấm, một **link** hiện ở danh sách bên trái để họ gửi cho người khác trả lời. Đừng bịa link, đừng tự viết ra URL.
