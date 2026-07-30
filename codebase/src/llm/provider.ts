@@ -1,11 +1,20 @@
 import type { TurnResult } from '../types';
 
+import type Anthropic from '@anthropic-ai/sdk';
+import type { ContextResult } from '../agent/context-phase';
+
 export interface LlmProvider {
   /** Tên hiện trên UI + ghi vào trace. */
   readonly label: string;
   /** true nếu là lời gọi AI THẬT (R5 đòi khai rõ phần nào mock). */
   readonly isReal: boolean;
+  /** Stage ★ — quyết định AI trung tâm. Không có tool, output ràng buộc schema. */
   complete(system: string, user: string): Promise<TurnResult>;
+  /**
+   * Pha 1 — vòng lặp tool tra catalog đề tài. `undefined` = provider không hỗ trợ
+   * tool; app khi đó bỏ qua pha này và vào thẳng phỏng vấn.
+   */
+  contextPhase?(messages: Anthropic.MessageParam[]): Promise<ContextResult>;
 }
 
 /** Bản ghi mỗi lời gọi AI — R5: "log/trace trong repo". */

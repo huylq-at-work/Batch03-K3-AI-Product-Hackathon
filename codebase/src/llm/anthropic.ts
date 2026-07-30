@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { TURN_SCHEMA } from '../agent/schema';
+import { runContextPhase } from '../agent/context-phase';
 import { extractJson, normalize, type LlmProvider } from './provider';
 import type { TurnResult } from '../types';
 
@@ -22,6 +23,10 @@ export function createAnthropicProvider(apiKey: string, model: string): LlmProvi
   return {
     label: `Anthropic ${model}`,
     isReal: true,
+    // Chỉ provider này có vòng lặp tool (pha 1). Gemini/OpenAI/Mock trả undefined
+    // → app bỏ qua pha chuẩn bị ngữ cảnh và vào thẳng phỏng vấn. Ghi rõ trong
+    // spec.md §4: phần nào thật, phần nào không.
+    contextPhase: (messages) => runContextPhase(client, model, messages),
     async complete(system: string, user: string): Promise<TurnResult> {
       const response = await client.messages.create({
         model,
