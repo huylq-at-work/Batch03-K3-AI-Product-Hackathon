@@ -139,7 +139,7 @@ export const TAO_KHAO_SAT_TOOL = {
           'LMS → "sinh viên dùng nhiều hệ thống nộp bài". Người trả lời phải là người CÓ trải ' +
           'nghiệm đó thì mới đào được 5-why.',
       },
-      so_tang: { type: 'integer', description: 'Số tầng why tối đa, 3–7. Mặc định 5.' },
+      so_tang: { type: 'integer', description: 'Số tầng why tối đa, 3–7. Mặc định 4 (đủ hiểu nỗi đau, đừng hỏi lê thê).' },
       cong_khai: {
         type: 'boolean',
         description: 'true = ai có link cũng trả lời được (cần cho người ngoài nhóm). Mặc định true.',
@@ -233,7 +233,7 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
           ten,
           chu_de,
           persona_in,
-          so_tang: Math.min(Math.max(typeof input.so_tang === 'number' ? input.so_tang : 5, 3), 7),
+          so_tang: Math.min(Math.max(typeof input.so_tang === 'number' ? input.so_tang : 4, 3), 7),
           cong_khai: input.cong_khai !== false,
         },
         message:
