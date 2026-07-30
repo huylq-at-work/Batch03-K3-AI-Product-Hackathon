@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   ADVISOR_SYSTEM_PROMPT,
   advisorTools,
+  CAP_DAO_5WHY,
   datHamWebSearch,
   deTaiToolsDisabled,
 } from '../agent/tools';
@@ -136,19 +137,42 @@ export function Advisor({
     setError('');
     setViPham([]);
     const next: ToolLoopMsg[] = [...messages, { role: 'user', text }];
-    // Số lượt quyết định tool nào hiện (web_search mở từ lượt 4 — advisorTools).
     const soLuot = next.filter((m) => m.role === 'user').length;
+    // Đã tạo khảo sát trong phiên chưa → quyết định PHA: web_search chỉ mở sau khi
+    // tạo khảo sát (pha leverage/MVP), không mở lúc còn đào 5-why.
+    const daTaoKhaoSat = next.some(
+      (m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'tao_khao_sat'),
+    );
+    // Ép cứng chống hỏi-why-vô-hạn: quá CAP lượt mà chưa tạo khảo sát → buộc gọi
+    // tao_khao_sat. Prompt có luật dừng nhưng model bỏ qua khi hội thoại dài.
+    const epChotKhaoSat = !daTaoKhaoSat && soLuot >= CAP_DAO_5WHY;
     setMessages(next);
     setBusy(true);
     setStream('');
     setDangLam('đang suy nghĩ…');
 
+    // Directive động ghép vào cuối system prompt. Ép cứng cái prompt tĩnh không giữ.
+    let chiThi = '';
+    if (epChotKhaoSat) {
+      chiThi =
+        '\n\n# BẮT BUỘC LƯỢT NÀY\nĐã đào đủ 5 lượt. DỪNG hỏi "vì sao". Chốt painpoint SÂU NHẤT đã đạt (nói rõ nếu chuỗi chưa hoàn chỉnh) và gọi `tao_khao_sat` NGAY trong lượt này. Không hỏi thêm câu why nào nữa.';
+    } else if (!daTaoKhaoSat && soLuot === 2) {
+      // Lượt đào đầu tiên: model hay quên giải thích 5-why. Ép nói một lần.
+      chiThi =
+        '\n\n# BẮT BUỘC LƯỢT NÀY\nĐây là lần đầu bạn hỏi "vì sao". TRƯỚC câu hỏi, PHẢI nói một câu giải thích: đây là kỹ thuật 5-why, bạn sẽ hỏi "vì sao" vài lần liên tiếp để tìm nguyên nhân gốc, mong người dùng kiên nhẫn, không rõ thì cứ nói để dừng. Rồi mới hỏi câu why đầu tiên.';
+    }
+
+    // web_search: chỉ ép khi ĐÃ ở pha sau-khảo-sát và chưa tra lần nào.
+    const chuaTraWeb = !next.some(
+      (m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'web_search'),
+    );
+
     try {
       const r = await runToolLoop({
         chat: provider.toolChat,
-        system: ADVISOR_SYSTEM_PROMPT,
-        // Theo số lượt: web_search bị ẩn trước lượt 4. Xem advisorTools().
-        tools: advisorTools(soLuot) as never,
+        system: ADVISOR_SYSTEM_PROMPT + chiThi,
+        // web_search chỉ có sau khi đã tạo khảo sát (pha leverage/MVP). Xem advisorTools().
+        tools: advisorTools(daTaoKhaoSat) as never,
         messages: next,
         // Streaming: mỗi mẩu text hiện dần. Vòng gọi tool không có text nên im;
         // vòng trả lời cuối thì chữ chạy ra.
@@ -156,12 +180,11 @@ export function Advisor({
           setDangLam('');
           setStream((s) => s + mau);
         },
-        // Từ lượt 5 (pha leverage/MVP) mà cả phiên CHƯA tra web lần nào thì ép gọi
-        // một lần — prompt "bắt buộc tra trước khi viết" đã thua 3 lần chạy liên
-        // tiếp, model cứ viết từ trí nhớ. Chỉ ép lần đầu; các lượt sau tự do.
-        epGoi:
-          soLuot >= 5 &&
-          !next.some((m) => m.role === 'tool_calls' && m.calls.some((c) => c.name === 'web_search'))
+        // Ép cứng: hết cap thì buộc tạo khảo sát; ở pha leverage thì buộc tra web
+        // một lần (prompt "bắt buộc" đã thua nhiều lần, model viết từ trí nhớ).
+        epGoi: epChotKhaoSat
+          ? 'tao_khao_sat'
+          : daTaoKhaoSat && chuaTraWeb
             ? 'web_search'
             : undefined,
       });

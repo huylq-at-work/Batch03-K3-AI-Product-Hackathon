@@ -280,32 +280,30 @@ export function datHamWebSearch(fn: ((cauHoi: string) => Promise<unknown>) | nul
 }
 
 /**
- * Tra web sớm hơn mốc này thì kết quả chung chung mà vẫn mất ~9 giây mỗi lần.
- * Cưỡng chế DUY NHẤT bằng cách ẩn tool (`advisorTools`) — tool không nằm trong
- * danh sách gửi API thì model không thể gọi, không cần cổng thứ hai.
- *
- * Bản trước có thêm cổng đếm lượt trong `runTool` qua một biến module mutable
- * (`datSoLuot`). Đã bỏ sau khi nó tự bắn vào chân: Vite HMR tạo NHIỀU instance
- * của module này, UI set số lượt trên instance này còn `runTool` đọc instance
- * kia — thế là chặn cả lời gọi hợp lệ do chính mình ép (`epGoi`). State mutable
- * trong module + HMR là tổ hợp không tin được; ràng buộc tĩnh (ẩn tool) thì không
- * có state nào để lệch.
+ * Đào tối đa bấy nhiêu lượt why rồi PHẢI chốt + tạo khảo sát. Prompt có ghi luật
+ * dừng, nhưng gpt-4o-mini bỏ qua khi hội thoại trôi dài (đã đo: hỏi why 7+ lần,
+ * quay ra nhại câu người dùng). Nên UI ép cứng: tới mốc này mà chưa tạo khảo sát
+ * thì buộc gọi `tao_khao_sat` (xem Advisor.tsx). 5 khớp tên "5-why".
  */
-const LUOT_TOI_THIEU_WEB_SEARCH = 4;
+export const CAP_DAO_5WHY = 5;
 
 /**
- * Tool của cố vấn, thay đổi theo số lượt.
+ * Tool của cố vấn, mở dần theo PHA.
  *
- * `web_search` bị **ẩn hoàn toàn** trước lượt 4, không phải chỉ bị `runTool` từ chối.
- * Lý do đo được: khi chỉ từ chối mà vẫn để tool trong danh sách, model gọi lại **5
- * lần trong cùng một lượt** và cháy hết trần vòng lặp — 5 lượt gọi API vô ích. Nó
- * đọc `{error}` là "thử lại đi", không phải "đừng gọi".
+ * `web_search` bị **ẩn hoàn toàn** cho tới khi đã tạo khảo sát, không phải chỉ bị
+ * `runTool` từ chối. Hai lý do đo được:
+ *  - Ẩn là cách duy nhất chắc chắn: khi chỉ từ chối mà vẫn để tool trong danh sách,
+ *    model gọi lại 5 lần trong một lượt và cháy trần vòng lặp — nó đọc `{error}` là
+ *    "thử lại đi".
+ *  - Gate theo ĐÃ-TẠO-KHẢO-SÁT chứ không theo số lượt: web chỉ dùng ở pha AI leverage
+ *    / MVP, mà pha đó nằm SAU khi tạo khảo sát. Bản cũ gate theo `soLuot >= 4` nên
+ *    khi người dùng còn kẹt đào 5-why tới lượt 4-5, web bật ra và model tra web GIỮA
+ *    lúc đào — đúng lỗi vừa gặp ("đang tra web" khi đang hỏi vì sao).
  *
- * Cùng bài học với cờ tắt catalog: ẩn tool là cách duy nhất chắc chắn model không
- * gọi. `runTool` vẫn giữ kiểm tra như lớp thứ hai, cho lời gọi lọt từ history cũ.
+ * `runTool` vẫn giữ kiểm tra như lớp thứ hai, cho lời gọi lọt từ history cũ.
  */
-export function advisorTools(soLuot: number): readonly unknown[] {
-  const web = soLuot >= LUOT_TOI_THIEU_WEB_SEARCH ? [WEB_SEARCH_TOOL] : [];
+export function advisorTools(daTaoKhaoSat: boolean): readonly unknown[] {
+  const web = daTaoKhaoSat ? [WEB_SEARCH_TOOL] : [];
   return [...CATALOG_TOOLS, ...web, TAO_KHAO_SAT_TOOL];
 }
 
@@ -343,7 +341,11 @@ TUYỆT ĐỐI KHÔNG: liệt kê tech stack, kiến trúc, tính năng, hay cá
 - Chưa biết bắt đầu từ đâu → \`liet_ke_khoi\`.
 - Chưa chọn được đề nào cũng không sao, vẫn đào được. **Đừng ép họ chọn.**
 
-**2. Đào 5-why với CHÍNH HỌ.** Mỗi lượt hỏi một câu "vì sao". Với mỗi câu trả lời, nói thẳng nó là:
+**2. Đào 5-why với CHÍNH HỌ.**
+
+⚠️ **NGAY TRƯỚC câu "vì sao" ĐẦU TIÊN, giải thích một lần** (chỉ một lần, ngắn): *"Mình sẽ dùng kỹ thuật **5-why** — hỏi 'vì sao' vài lần liên tiếp để lần xuống nguyên nhân gốc. Có thể hơi lặp, mong bạn kiên nhẫn trả lời nhé; nếu tới đâu bạn không rõ thì cứ nói, mình dừng."* Rồi mới hỏi câu why đầu. Các lượt sau KHÔNG lặp lại lời giải thích này.
+
+Mỗi lượt hỏi một câu "vì sao". Với mỗi câu trả lời, nói thẳng nó là:
 - **triệu chứng** — biểu hiện bề mặt, chưa nói vì sao ("mất thời gian", "thấy bất tiện")
 - **điều kiện** — hoàn cảnh **không ai làm gì được** ("vì tôi còn là sinh viên")
 - **nguyên nhân** — một hành động, một lựa chọn, **HOẶC MỘT CÁI ĐANG THIẾU mà bù vào thì vấn đề hết**. **Chỉ loại này mới can thiệp được.**
@@ -358,6 +360,18 @@ Cách tự phân loại — **TỰ HỎI TRONG ĐẦU, TUYỆT ĐỐI KHÔNG GÕ
 ⚠️ **Một sự VẮNG MẶT không tự động là điều kiện.** Đây là lỗi hay gặp nhất và nó làm cả cuộc tư vấn đi vào ngõ cụt. "Không có X", "chưa có X", "không ai làm X" — hỏi tiếp: *bù X vào thì vấn đề hết chưa?* Hết → **nguyên nhân**, vì chính việc bù X vào là giải pháp, và thường đó là cả sản phẩm họ cần làm.
 
 Ví dụ: *"trường không có chỗ nào gom deadline các môn lại"* → **nguyên nhân**, không phải điều kiện. Làm cái gom deadline là xong.
+
+## KHI NÀO DỪNG ĐÀO — đây là chỗ bạn hay sai nhất
+
+Bạn KHÔNG hỏi "vì sao" mãi. Dừng NGAY khi gặp **bất kỳ** điều nào sau, rồi sang bước 3:
+
+1. **Tới nguyên nhân can thiệp được** → dừng, đây là đích.
+2. **Ngõ cụt — người trả lời không biết nữa.** Khi họ nói *"tôi không nhớ", "hình như", "không chắc", "không biết", "chắc vậy"* — họ đã cạn thông tin. **ĐÀO TIẾP LÀ VÔ ÍCH VÀ KHÓ CHỊU.** Dừng lại, nói thẳng: "Tới đây thì mình chưa xuống sâu hơn được vì bạn không chắc — không sao, đây đúng là chỗ khảo sát người khác sẽ giúp làm rõ." Rồi sang bước 3 với painpoint SÂU NHẤT đã đạt.
+3. **Đủ 5 lượt why.** Đào tối đa 5 lần. Tới lượt why thứ 5 mà chưa ra nguyên nhân → dừng, chốt điểm sâu nhất, nói rõ chuỗi chưa hoàn chỉnh. Khảo sát sẽ bù.
+
+⚠️ Hai lỗi bạn ĐÃ MẮC trong hội thoại thật, đừng lặp:
+- **Nhại lại câu người dùng rồi mới hỏi why** ("Bạn cảm thấy...", "Bạn không nhớ rõ..."). ĐỪNG. Vào thẳng: một câu gán nhãn ngắn + câu why tiếp theo. Không tường thuật lại lời họ.
+- **Bỏ gán nhãn, chỉ hỏi why suông.** MỖI lượt phải nói rõ câu vừa rồi là triệu chứng / điều kiện / nguyên nhân. Không gán nhãn thì bạn không biết khi nào tới đích.
 
 **3. Chốt painpoint.** Khi tới nguyên nhân can thiệp được, phát biểu lại painpoint trong một câu, và nói rõ nó khác gì với câu họ nói ban đầu.
 

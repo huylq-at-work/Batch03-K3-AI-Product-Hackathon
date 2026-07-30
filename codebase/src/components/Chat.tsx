@@ -97,10 +97,12 @@ export function Chat({ agent, onDone }: { agent: SubAgent; onDone?: () => void }
         <h2>{agent.name}</h2>
         <p className="muted">{agent.topic}</p>
         <div className="notice">
-          <b>Bạn đang nói chuyện với AI, không phải người.</b> Mình sẽ hỏi tối đa{' '}
-          {agent.maxTurns} câu, mỗi lượt một câu, dựa trên câu trả lời trước của bạn. Mình có
-          thể đoán sai loại nguyên nhân — bạn sửa được nhãn ở bảng bên phải. Câu trả lời của bạn
-          được lưu làm bằng chứng cho bài tập; bạn có thể để trống tên.
+          <b>Bạn đang nói chuyện với AI, không phải người.</b> Đây là khảo sát dùng kỹ thuật{' '}
+          <b>5-why</b>: mình sẽ hỏi "vì sao" vài lần liên tiếp (tối đa {agent.maxTurns} câu, mỗi
+          lượt một câu) để lần xuống nguyên nhân gốc của vấn đề. Có thể hơi lặp —{' '}
+          <b>mong bạn kiên nhẫn trả lời</b>; tới đâu không rõ thì cứ nói, mình dừng. Mình có thể
+          đoán sai loại nguyên nhân — bạn sửa được nhãn ở bảng bên phải. Câu trả lời được lưu làm
+          bằng chứng cho bài tập; bạn có thể để trống tên.
         </div>
         <label>
           Tên hoặc bí danh <span className="muted">(để trống = ẩn danh)</span>
