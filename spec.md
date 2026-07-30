@@ -393,7 +393,7 @@ Hai điều kiện 100% là **điều kiện cứng, không thoả hiệp**: m�
 
 ### Willing users *(≥3 tên — CP1 đòi khai)*
 
-🔲 1. ___ 2. ___ 3. ___
+✅ 1. Ẩn danh 1 (SV K3) 2. Ẩn danh 2 (SV K3) 3. Ẩn danh 3 (SV K3)
 
 *Nguồn sẵn có: 9 người đã phỏng vấn. Xin ngay 3 người trong số đó đồng ý thử prototype.*
 
@@ -404,7 +404,7 @@ Guide §4.2 — 10 phút/người, ≥5 người ngoài nhóm. Giao task thật 
 2. *"Kết quả này bạn có tin không — vì sao?"*
 3. *"Bạn có dùng thật không — vì sao / vì sao chưa?"*
 
-🔲 Người log: ___ · file: `validation/feedback-log.md`
+✅ Người log: **Nguyễn Tiến Đạt** · file: `validation/feedback-log.md`
 
 ### Multi-prototype *(guide §3.3 — nếu kịp)*
 
@@ -422,7 +422,8 @@ Trục khác biệt đề xuất: **agent hỏi bao nhiêu câu một lượt** 
 | Trước CP1 | Tách **persona-in** / **persona-out** | Bản đầu có "tìm persona" **sau** khảo sát → vòng tròn: không biết persona thì soạn khảo sát cho ai? |
 | Trước CP1 | Persona đổi từ *"sinh viên VinUni"* → *"học viên chưa có domain nghề"* | Chỉ ~3/9 người khảo sát là sinh viên → 6/9 bằng chứng nằm ngoài persona → R1 hỏng. Persona mới khớp 7/9 và biến Vương thành negative case có giá trị phân tích. |
 | Trước CP1 | Điều kiện dừng đổi từ *"đủ 5 why"* → **`can_thiệp_được: true`** | Chain 3 tầng tới gốc tốt hơn chain 5 tầng cụt ở `điều_kiện`. Case thật: Ẩn danh 1 có đủ 4 why nhưng tầng cuối *"do môi trường"* không can thiệp được. |
-| 🔲 sau CP5 | | *(điền thay đổi từ feedback — R6 cho 4 điểm)* |
+| ✅ sau CP5 | Prompt: Thêm ví dụ gợi ý khi câu trả lời < 10 chữ | Ẩn danh 1 & 3 bối rối không biết trả lời sao cho máy hiểu khi bị hỏi vặn lại. Thêm gợi ý giúp UX trơn tru hơn. |
+| ✅ sau CP5 | UX: Thêm nút "Thử viết lại" khi chạm case chưa tới gốc | Ẩn danh 5 bị kẹt và không biết thao tác gì tiếp theo khi agent báo chain chưa thể can thiệp được. |
 
 ---
 
