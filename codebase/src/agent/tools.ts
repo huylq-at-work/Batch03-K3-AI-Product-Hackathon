@@ -109,8 +109,16 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
   }
 
   switch (name) {
+    // Trả nguyên kết quả, KHÔNG bọc thêm. Bản trước là
+    //   return { tong_de_tai: TONG_DE_TAI, khoi: lietKeKhoi() };
+    // và sai hai lần trong một dòng:
+    //   1. thiếu `await` — `khoi` là Promise, JSON.stringify ra `{}`, nên model
+    //      KHÔNG BAO GIỜ nhận được danh sách khối, kể cả khi mọi thứ bình thường.
+    //   2. `TONG_DE_TAI` hằng số ghi đè số thật và **nuốt luôn `{error}`** — giải mã
+    //      thất bại mà tool vẫn báo "360 đề tài", đúng đường lớp ① bịa đặt.
+    // `lietKeKhoi()` đã tự trả `{tong_de_tai, khoi}` hoặc `{error, message}`.
     case 'liet_ke_khoi':
-      return { tong_de_tai: TONG_DE_TAI, khoi: lietKeKhoi() };
+      return lietKeKhoi();
 
     case 'tim_de_tai':
       return timDeTai({
