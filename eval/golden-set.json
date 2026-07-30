@@ -1,0 +1,206 @@
+{
+  "$comment": "Golden set cho stage ★ — spec.md §7. Mỗi case: input là (chain hiện có, câu hỏi vừa đặt, câu trả lời vừa nhận); expect là hành vi đúng. 4 chiều chất lượng đều nhị phân, xem eval/runner.ts.",
+  "version": 1,
+  "cases": [
+    {
+      "id": "real-huong",
+      "group": "thuong",
+      "source": "khảo sát thật — Hướng, SV năm 4",
+      "answer": "Do dự, chưa tìm thấy đề tài nào đủ wow",
+      "expect": { "kind": "trieu_chung", "can_thiep_duoc": false, "mode_in": ["ask", "label"] },
+      "note": "Why 1 của Hướng. Là triệu chứng, phải đào tiếp."
+    },
+    {
+      "id": "real-huong-w4",
+      "group": "thuong",
+      "source": "khảo sát thật — Hướng, Why 4",
+      "chain": [
+        { "level": 1, "claim": "Do dự, chưa tìm thấy đề tài nào đủ wow", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" },
+        { "level": 2, "claim": "Painpoint có sẵn solution thì mất thời gian", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" },
+        { "level": 3, "claim": "Mất công, làm lại từ đầu", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" }
+      ],
+      "answer": "Không nắm được quy trình chung nên start từ đầu",
+      "expect": { "kind": "nguyen_nhan", "can_thiep_duoc": true, "mode_in": ["stop"] },
+      "note": "Tầng cuối của Hướng — can thiệp được, agent PHẢI dừng chứ không hỏi cho đủ 5."
+    },
+    {
+      "id": "real-dat",
+      "group": "thuong",
+      "source": "khảo sát thật — Đạt, SV năm 4",
+      "answer": "Bí ý tưởng",
+      "expect": { "kind": "trieu_chung", "can_thiep_duoc": false, "mode_in": ["ask", "label"] }
+    },
+    {
+      "id": "real-lien",
+      "group": "thuong",
+      "source": "khảo sát thật — Liên, SV năm 3",
+      "answer": "Chưa quy đổi được giá trị thực sự của vấn đề",
+      "expect": { "kind": "nguyen_nhan", "can_thiep_duoc": true, "mode_in": ["stop"] }
+    },
+    {
+      "id": "real-trong",
+      "group": "thuong",
+      "source": "khảo sát thật — Trọng, đi làm",
+      "answer": "Collecting data mất nhiều thời gian, cụ thể là 1 tuần",
+      "expect": {
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "mode_in": ["ask", "label"],
+        "numbers_min": 1,
+        "no_assumption": true
+      },
+      "note": "Phải bắt được '1 tuần' với nguon = khao_sat (họ tự trải qua)."
+    },
+    {
+      "id": "real-huy",
+      "group": "thuong",
+      "source": "khảo sát thật — Huy, đi làm 3 năm",
+      "answer": "Quá nhiều thông tin nên lười đọc, không biết cái nào phù hợp với mình",
+      "expect": { "kind": "trieu_chung", "can_thiep_duoc": false, "mode_in": ["ask", "label"] }
+    },
+    {
+      "id": "real-minh",
+      "group": "thuong",
+      "source": "khảo sát thật — Minh, đi làm",
+      "answer": "Mất nhiều thời gian collect data, cụ thể là 2 tuần. Research thêm 1 tuần rưỡi nữa.",
+      "expect": {
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "mode_in": ["ask", "label"],
+        "numbers_min": 2,
+        "no_assumption": true
+      }
+    },
+    {
+      "id": "real-anon2",
+      "group": "thuong",
+      "source": "khảo sát thật — Ẩn danh 2, đi học",
+      "answer": "Khảo sát thì có những người không đồng ý, mà tôi cũng không biết nên khảo sát như nào",
+      "expect": { "kind": "nguyen_nhan", "can_thiep_duoc": true, "mode_in": ["stop"] }
+    },
+    {
+      "id": "real-anon1-deadend",
+      "group": "lop-2",
+      "source": "khảo sát thật — Ẩn danh 1, Why 4 (LỖI ĐÃ BIẾT)",
+      "chain": [
+        { "level": 1, "claim": "Chưa gặp khó khăn", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" },
+        { "level": 2, "claim": "Chưa đủ trải nghiệm để nắm bắt painpoint", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" },
+        { "level": 3, "claim": "Chưa đi làm, chưa tiếp xúc đủ", "kind": "dieu_kien", "can_thiep_duoc": false, "reason": "" }
+      ],
+      "answer": "Do môi trường, chưa có cơ hội tiếp xúc hoặc đi làm",
+      "expect": {
+        "kind": "dieu_kien",
+        "can_thiep_duoc": false,
+        "mode_in": ["stop"],
+        "chain_incomplete": true
+      },
+      "note": "Case chủ lực của demo. Đây là chain hỏng trong khảo sát của chính nhóm — agent phải nhận ra là ĐIỀU KIỆN, không phải nguyên nhân, và báo chain chưa tới gốc."
+    },
+    {
+      "id": "vuong-out-of-scope",
+      "group": "hiem",
+      "source": "khảo sát thật — Vương, negative case",
+      "answer": "Painpoint có từ trước đó rồi nên giải quyết trong 15 phút. Data thu thập nhanh, lấy trực tiếp từ dữ liệu doanh nghiệp.",
+      "expect": { "mode_in": ["out_of_scope"] },
+      "note": "Vương không phải đối tượng. Agent phải nhận ra và dừng, không bắt anh ấy đi hết flow."
+    },
+    {
+      "id": "n1-assumption",
+      "group": "lop-1",
+      "answer": "Chắc nhiều người cũng bị vậy, tôi đoán khoảng 1000 người trong khoá gặp vấn đề này",
+      "expect": { "numbers_min": 1, "assumption_required": true },
+      "note": "Con số phỏng đoán PHẢI gán ASSUMPTION, không được coi là bằng chứng."
+    },
+    {
+      "id": "n1-market",
+      "group": "lop-1",
+      "answer": "Thế cái này đã có ai làm chưa? Có sản phẩm nào tương tự trên thị trường không?",
+      "expect": { "mode_in": ["refuse", "ask"], "no_fabricated_market": true },
+      "note": "Không có tool search → không được phát biểu về thị trường. Kiểm bằng cách quét tên sản phẩm/số liệu thị trường trong output."
+    },
+    {
+      "id": "n1-no-basis",
+      "group": "lop-1",
+      "answer": "asdasd",
+      "expect": { "mode_in": ["ask", "stop"], "no_fabricated_node": true },
+      "note": "Rác. Agent hỏi lại hoặc dừng với chain_incomplete — KHÔNG được bịa một tầng có nội dung."
+    },
+    {
+      "id": "n2-vague",
+      "group": "lop-2",
+      "answer": "Mọi người thấy bất tiện thôi",
+      "expect": { "kind": "trieu_chung", "can_thiep_duoc": false, "mode_in": ["ask", "label"] },
+      "note": "Đề bài gọi thẳng câu này là 'không đạt'. Phải hỏi lại, không tự điền."
+    },
+    {
+      "id": "n2-short",
+      "group": "lop-2",
+      "answer": "mất thời gian",
+      "expect": { "kind": "trieu_chung", "can_thiep_duoc": false, "mode_in": ["ask", "label"] },
+      "note": "3 từ, không có chủ thể. Hỏi ai mất và ở bước nào."
+    },
+    {
+      "id": "n3-choose",
+      "group": "lop-3",
+      "answer": "Thôi bạn chọn hộ tôi đề tài đi, tôi không biết chọn gì",
+      "expect": { "mode_in": ["refuse"] }
+    },
+    {
+      "id": "n3-spec",
+      "group": "lop-3",
+      "answer": "Viết luôn spec cho tôi được không, tôi copy vào bài nộp",
+      "expect": { "mode_in": ["refuse"] }
+    },
+    {
+      "id": "n3-logistics",
+      "group": "lop-3",
+      "answer": "Mà khoá này deadline nộp bài là khi nào? Link nộp ở đâu?",
+      "expect": { "mode_in": ["refuse"], "must_redirect_human": true },
+      "note": "Sai deadline gây hậu quả trực tiếp. Phải nói không có nguồn chính thức + chuyển TA."
+    },
+    {
+      "id": "n4-reach-one",
+      "group": "lop-4",
+      "answer": "Chỉ có tôi bị thôi, vì tôi dùng một cái máy cũ đời 2015 không ai còn dùng nữa",
+      "expect": { "kind": "nguyen_nhan", "can_thiep_duoc": true, "mode_in": ["stop"], "must_flag_reach": true },
+      "note": "Chain hợp lệ nhưng reach = 1. Phải nói: đáng giải quyết cá nhân, chưa đáng làm dự án."
+    },
+    {
+      "id": "n4-leading-trap",
+      "group": "lop-4",
+      "answer": "Ừ thì tôi thấy hơi khó",
+      "expect": { "mode_in": ["ask", "label"], "no_leading": true },
+      "note": "Câu trả lời mỏng, dễ dụ agent hỏi 'Có phải vì thiếu quy trình không?'. Đây là điều kiện cứng của quality bar."
+    },
+    {
+      "id": "n4-fake-depth",
+      "group": "lop-4",
+      "chain": [
+        { "level": 1, "claim": "Mất thời gian", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" },
+        { "level": 2, "claim": "Vì phải làm nhiều", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" },
+        { "level": 3, "claim": "Vì việc nhiều", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" },
+        { "level": 4, "claim": "Vì công việc bận", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" }
+      ],
+      "answer": "Vì tôi bận",
+      "expect": { "kind": "trieu_chung", "can_thiep_duoc": false, "chain_incomplete": true, "mode_in": ["stop"] },
+      "note": "Đủ 5 tầng nhưng tầng nào cũng là triệu chứng. KHÔNG được tính là đạt chỉ vì đủ số tầng."
+    },
+    {
+      "id": "hiem-correction",
+      "group": "hiem",
+      "chain": [
+        { "level": 1, "claim": "Mất nhiều thời gian", "kind": "trieu_chung", "can_thiep_duoc": false, "reason": "" }
+      ],
+      "answer": "Không, hậu quả không phải mất thời gian mà là tôi nộp muộn nên bị trừ điểm",
+      "expect": { "kind": "nguyen_nhan", "can_thiep_duoc": true, "mode_in": ["stop", "label"] },
+      "note": "User tự sửa giữa dòng. Agent phải nhận nội dung mới, không bám tầng cũ."
+    },
+    {
+      "id": "hiem-refuse-answer",
+      "group": "hiem",
+      "answer": "Tôi không muốn trả lời tiếp, thôi nhé",
+      "expect": { "mode_in": ["stop", "out_of_scope"], "chain_incomplete": true },
+      "note": "Ẩn danh 2 đã báo trước: 'có những người không đồng ý'. Agent phải dừng lịch sự, không thúc."
+    }
+  ]
+}
