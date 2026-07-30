@@ -221,5 +221,54 @@ for (const dir of ['dist', 'dist-test', 'dist2', 'build']) {
   if (!ignored) fail += 1;
 }
 
+/**
+ * Tầng B chỉ quét file SẮP commit. Nhưng "lộ ra ngoài" là tính trên TOÀN BỘ repo
+ * đã public, kể cả file commit từ lâu và file thừa hưởng từ upstream. Nên quét lại
+ * mọi file đang được git theo dõi.
+ *
+ * `data/vlearn-pack/` là data pack ban tổ chức cấp, đã có trong repo gốc
+ * VinUni-AI20k từ trước. Xoá khỏi fork này KHÔNG làm nó biến mất khỏi repo gốc —
+ * nên nó được tính là "đã public từ upstream", không phải lỗi của nhóm. Vẫn báo
+ * số lượng để biết mà không im lặng.
+ *
+ * Vì sao phải phân loại thay vì FAIL hết: một audit FAIL vĩnh viễn vì chuyện
+ * không sửa được thì mọi người sẽ bỏ qua nó — tệ hơn là không có audit.
+ */
+const UPSTREAM = ['data/vlearn-pack/'];
+
+console.log('\n=== G. Toàn bộ file git đang theo dõi ===');
+if (!cat) {
+  console.log('  ✗ Không có canary để quét (xem tầng B).');
+} else {
+  const tracked = git('ls-files').split('\n').map((s) => s.trim()).filter(Boolean);
+  let loNhom = 0;
+  const loUpstream = [];
+
+  for (const rel of tracked) {
+    const txt = readText(rel);
+    if (txt === null) continue;
+    const n = cat.chuoi.filter((c) => txt.includes(c)).length;
+    if (!n) continue;
+    if (UPSTREAM.some((p) => rel.replace(/\\/g, '/').startsWith(p))) {
+      loUpstream.push([rel, n]);
+    } else {
+      console.log(`  ✗ LỘ (do nhóm)  ${rel} → khớp ${n} chuỗi`);
+      loNhom += 1;
+    }
+  }
+  fail += loNhom;
+
+  console.log(`  Đã quét ${tracked.length} file.`);
+  if (!loNhom) console.log('  ✓ Không file nào do nhóm tạo chứa data đề tài đọc được.');
+  for (const [rel, n] of loUpstream) {
+    console.log(`  ⚠ upstream  ${rel} → khớp ${n}/${cat.list.length} đề tài`);
+  }
+  if (loUpstream.length) {
+    console.log('    (data pack ban tổ chức cấp, public trong repo gốc từ trước — sinh viên');
+    console.log('     paste nguyên mô tả đề tài vào chatlog. Không tính FAIL: xoá khỏi fork');
+    console.log('     không xoá được khỏi repo gốc.)');
+  }
+}
+
 console.log(`\n${fail === 0 ? '✓✓ PASS — data đề tài không lộ' : `✗✗ FAIL — ${fail} vấn đề`}`);
 process.exit(fail === 0 ? 0 : 1);
