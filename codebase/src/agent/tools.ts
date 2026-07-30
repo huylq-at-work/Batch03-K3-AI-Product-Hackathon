@@ -15,6 +15,7 @@
 // Pha 2 (stage ★): hội thoại 5-why, KHÔNG tool, output ràng buộc theo TURN_SCHEMA
 
 import { lietKeKhoi, timDeTai, xemDeTai } from './catalog';
+import { co } from '../env';
 
 // Catalog mã hoá nên không đếm được mà chưa có key. Hai số này là dữ kiện công khai
 // (xem evidence/mining-de-tai.md) và chỉ dùng để viết description cho tool.
@@ -35,7 +36,10 @@ const TONG_KHOI = 21;
  * Ẩn tool một tầng thì một prompt injection hoặc một history cũ vẫn gọi được.
  */
 export function deTaiToolsDisabled(): boolean {
-  return String(import.meta.env.VITE_DISABLE_DE_TAI_TOOLS ?? '').toLowerCase() === 'true';
+  // Qua `co()` chứ không đọc thẳng import.meta.env: hàm này chạy ở TOP LEVEL
+  // (dòng CATALOG_TOOLS) nên trong Node — nơi import.meta.env là undefined —
+  // eval/runner.ts nổ ngay lúc import module. Xem src/env.ts.
+  return co('DISABLE_DE_TAI_TOOLS');
 }
 
 const ALL_CATALOG_TOOLS = [

@@ -13,6 +13,8 @@
 // filter. Sai: **360 tên đề tài chính là data đề tài**. Repo public chỉ chứa
 // ciphertext, và mọi tool đều cần passphrase.
 
+import { bien } from '../env';
+
 export interface DeTai {
   ma: string;
   khoi: string;
@@ -59,7 +61,8 @@ function b64ToBytes(b64: string): Uint8Array {
 }
 
 async function decryptCatalog(): Promise<DeTai[] | null> {
-  const pass = import.meta.env.VITE_DE_TAI_KEY;
+  // `bien()` chạy được cả trong browser (Vite) và Node (eval runner). Xem src/env.ts.
+  const pass = bien('DE_TAI_KEY');
   if (!pass) {
     loadError = 'thieu_key';
     return null;
