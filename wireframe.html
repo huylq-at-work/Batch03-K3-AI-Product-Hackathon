@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đào Gốc — Wireframe</title>
+<style>
+  :root{
+    --bg:#f2f1ee; --panel:#ffffff; --ink:#1c1a17; --ink-2:#6b675f; --ink-3:#9c988e;
+    --line:#c7c3ba; --line-soft:#dedad2;
+    --ai:#b7791f; --ai-bg:#fdf6e6;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 18px 80px}
+
+  header{margin-bottom:18px}
+  .kicker{font:600 10.5px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+  h1{margin:0;font-size:22px;letter-spacing:-.01em}
+  .sub{margin:6px 0 0;color:var(--ink-2);font-size:13.5px}
+
+  /* step tabs */
+  .steps{display:flex;gap:6px;margin:20px 0 22px;flex-wrap:wrap}
+  .step-btn{
+    font:600 11px/1 var(--mono);letter-spacing:.02em;padding:8px 11px;border-radius:7px;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;text-align:left
+  }
+  .step-btn .k{display:block;font-size:9.5px;color:var(--ink-3);letter-spacing:.1em;margin-bottom:2px}
+  .step-btn.active{border-color:var(--ai);color:var(--ai);background:var(--ai-bg)}
+  .step-btn:hover{border-color:var(--ink-3)}
+
+  /* wireframe canvas */
+  .screen{display:none;border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+  .screen.active{display:block}
+  .screen-head{
+    padding:10px 16px;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;
+    font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)
+  }
+  .screen-body{padding:20px}
+
+  /* wireframe primitives */
+  .wf-box{border:1.5px dashed var(--line);border-radius:8px;padding:13px 15px;margin-bottom:12px;position:relative}
+  .wf-box .tag{
+    position:absolute;top:-9px;left:11px;background:var(--panel);padding:0 6px;
+    font:600 9.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)
+  }
+  .wf-box.ai{border-color:var(--ai);border-style:solid}
+  .wf-box.ai .tag{color:var(--ai)}
+  .wf-box p{margin:4px 0 0;color:var(--ink-2)}
+  .wf-box .placeholder{
+    height:12px;background:repeating-linear-gradient(90deg,var(--line-soft) 0 8px,transparent 8px 12px);
+    border-radius:3px;margin-top:8px;max-width:88%
+  }
+  .wf-box .placeholder.short{max-width:45%}
+
+  .field{border:1px solid var(--line);border-radius:7px;padding:11px 13px;margin-bottom:10px}
+  .field label{display:block;font:600 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
+  .field .input-line{height:14px;border-bottom:1px solid var(--line-soft)}
+
+  .btn{
+    display:inline-block;border:1.5px solid var(--ink);border-radius:7px;padding:9px 16px;
+    font:600 13px/1 var(--sans);color:var(--ink);background:var(--panel);cursor:default
+  }
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;font:600 10px/1 var(--mono);
+    padding:4px 9px;border-radius:20px;border:1px solid var(--ai);color:var(--ai);background:var(--ai-bg);margin:2px 4px 2px 0
+  }
+  .chip.grey{border-color:var(--line);color:var(--ink-3);background:transparent}
+
+  /* chat bubbles */
+  .chat{display:flex;flex-direction:column;gap:12px}
+  .msg{max-width:80%;padding:10px 13px;border-radius:11px;font-size:14px;position:relative}
+  .msg.ai{align-self:flex-start;background:var(--ai-bg);border:1px solid var(--ai);color:var(--ink)}
+  .msg.user{align-self:flex-end;background:#eef0f2;border:1px solid var(--line);color:var(--ink)}
+  .msg .who{display:block;font:600 9px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;color:var(--ink-3)}
+  .msg .lbl{
+    display:inline-block;margin-top:6px;font:600 9.5px/1 var(--mono);color:var(--ai);
+    border:1px dashed var(--ai);border-radius:5px;padding:2px 6px
+  }
+
+  /* chain rail */
+  .chain{display:flex;flex-direction:column;gap:0}
+  .tier{border:1px solid var(--line);border-radius:8px;padding:11px 14px;background:var(--panel);position:relative}
+  .tier .tnum{font:600 11px/1 var(--mono);color:var(--ink-3)}
+  .tier .ttag{float:right;font:600 9.5px/1 var(--mono);padding:2px 7px;border-radius:20px;border:1px solid var(--line-soft);color:var(--ink-3)}
+  .tier .ttag.root{border-color:var(--ai);color:var(--ai);background:var(--ai-bg)}
+  .tier .placeholder{height:11px;margin-top:7px;max-width:75%}
+  .tier-arrow{height:16px;display:flex;justify-content:center;align-items:center}
+  .tier-arrow::before{content:"";width:1.5px;height:100%;background:var(--line)}
+
+  /* verdict grid */
+  .grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .grid4 .cell{border:1px dashed var(--line);border-radius:7px;padding:10px 12px}
+  .grid4 .cell b{display:block;font:600 10px/1 var(--mono);color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+  .grid4 .cell .src{margin-top:6px;font:600 9px/1 var(--mono);color:var(--ink-3)}
+  .grid4 .cell.miss{border-color:#c0857a;background:#fbf0ee}
+  .grid4 .cell.miss .src{color:#a03d33}
+
+  .verdict-bar{
+    display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:8px;margin-bottom:14px;
+    border:1.5px solid var(--ai);background:var(--ai-bg)
+  }
+  .verdict-bar b{font-size:14px}
+  .verdict-bar span{font-size:12.5px;color:var(--ink-2)}
+
+  .checklist{list-style:none;margin:0;padding:0}
+  .checklist li{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line-soft)}
+  .checklist li:last-child{border-bottom:none}
+  .checklist .box{width:15px;height:15px;border:1.5px solid var(--line);border-radius:4px;flex:none;margin-top:1px}
+
+  .note{
+    margin-top:12px;padding:10px 13px;border:1px dashed var(--line);border-radius:7px;
+    font-size:13px;color:var(--ink-2)
+  }
+
+  footer{margin-top:20px;color:var(--ink-3);font-size:12px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Wireframe · lo-fi · Đào Gốc / RootDig</div>
+  <h1>Wireframe giao diện — 5 màn hình chính</h1>
+  <p class="sub">Bấm từng bước để xem giao diện tương ứng với flow. Đây là bản phác thảo bố cục, chưa phải UI cuối.</p>
+</header>
+
+<div class="steps" id="steps"></div>
+
+<div id="screens"></div>
+
+<footer>wireframe.html · lo-fi mock · không kết nối API thật</footer>
+</div>
+
+<script>
+const steps = [
+  {
+    key: "0", title: "Chọn đối tượng", sub: "Persona-in",
+    body: `
+      <div class="wf-box ai"><span class="tag">AI kiểm tra</span>
+        <p>Mô tả ngắn: bạn muốn phỏng vấn ai để tìm pain?</p>
+      </div>
+      <div class="field">
+        <label>Persona</label>
+        <div class="input-line"></div>
+      </div>
+      <div class="field">
+        <label>Bối cảnh / linh cảm (tuỳ chọn)</label>
+        <div class="input-line"></div>
+        <div class="input-line" style="margin-top:8px"></div>
+      </div>
+      <button class="btn primary">Bắt đầu khảo sát</button>
+      <div class="note"><b>Nếu ngoài đối tượng:</b> hệ thống báo "không cần dùng công cụ này" và dừng ở đây — không ép đi hết flow.</div>
+    `
+  },
+  {
+    key: "1", title: "Khảo sát 5-why", sub: "AI thật — câu hỏi sinh động",
+    body: `
+      <div class="chat">
+        <div class="msg ai"><span class="who">AI · câu hỏi 1</span>Bạn gặp khó khăn gì gần đây trong việc chọn đề tài?</div>
+        <div class="msg user"><span class="who">Bạn</span>Mình thấy hơi bất tiện khi phải tự tìm data.</div>
+        <div class="msg ai"><span class="who">AI · câu hỏi 2</span>Cụ thể là bước nào trong việc tìm data khiến bạn mất nhiều thời gian nhất?
+          <span class="lbl">nhãn: điều_kiện</span>
+        </div>
+        <div class="msg user"><span class="who">Bạn</span>Lúc phải hỏi lại nhiều người vì câu trả lời đầu không đủ rõ.</div>
+        <div class="msg ai"><span class="who">AI · câu hỏi 3</span>Vì sao câu trả lời đầu thường không đủ rõ để dùng ngay?
+          <span class="lbl">nhãn: nguyên_nhân · can_thiệp_được</span>
+        </div>
+      </div>
+      <div class="note"><b>Điều kiện dừng:</b> dừng khi chạm nguyên_nhân can_thiệp_được — không phải khi đủ 5 câu.</div>
+    `
+  },
+  {
+    key: "2", title: "Chain kết quả", sub: "5-why có nhãn từng tầng",
+    body: `
+      <div class="chain">
+        <div class="tier"><span class="tnum">Tầng 1</span><span class="ttag">triệu_chứng</span><div class="placeholder"></div></div>
+        <div class="tier-arrow"></div>
+        <div class="tier"><span class="tnum">Tầng 2</span><span class="ttag">điều_kiện</span><div class="placeholder"></div></div>
+        <div class="tier-arrow"></div>
+        <div class="tier"><span class="tnum">Tầng 3</span><span class="ttag root">nguyên_nhân · gốc</span><div class="placeholder"></div></div>
+      </div>
+      <div class="note">Mỗi tầng có <b>nhãn loại</b> + <b>nguồn</b>. Cảnh báo hiển thị riêng nếu chain cụt (vd: dừng ở "do môi trường").</div>
+    `
+  },
+  {
+    key: "3", title: "Sàng — đủ căn cứ?", sub: "Kiểm tra 4 ô + nguồn",
+    body: `
+      <div class="grid4">
+        <div class="cell"><b>Ai</b><div class="placeholder short"></div><div class="src">nguồn: khảo sát</div></div>
+        <div class="cell"><b>Đang làm gì</b><div class="placeholder short"></div><div class="src">nguồn: khảo sát</div></div>
+        <div class="cell"><b>Vướng đâu</b><div class="placeholder short"></div><div class="src">nguồn: khảo sát</div></div>
+        <div class="cell miss"><b>Hậu quả gì</b><div class="placeholder short"></div><div class="src">nguồn: ASSUMPTION ⚠</div></div>
+      </div>
+      <div class="verdict-bar"><b>Verdict: Chưa đủ căn cứ</b><span>1 ô đang dựa trên giả định, chưa tính vào kết luận</span></div>
+      <div class="note">Ô có nguồn <code>ASSUMPTION</code> sẽ không được tính vào verdict "đủ căn cứ".</div>
+    `
+  },
+  {
+    key: "4", title: "Rẽ nhánh kết quả", sub: "Đủ căn cứ / Chưa đủ căn cứ",
+    body: `
+      <div class="wf-box"><span class="tag">Nhánh ✓ đủ căn cứ</span>
+        <p><b>Checklist AI leverage</b></p>
+        <ul class="checklist">
+          <li><span class="box"></span>Bước nào AI có thể thay con người làm nhanh hơn?</li>
+          <li><span class="box"></span>Bước nào bắt buộc cần con người quyết định?</li>
+        </ul>
+        <p style="margin-top:10px"><b>Brainstorm MVP</b> — template gợi ý, người dùng tự điền (AI không sinh hộ ý tưởng)</p>
+        <div class="placeholder"></div><div class="placeholder short" style="margin-top:6px"></div>
+      </div>
+      <div class="wf-box"><span class="tag">Nhánh ✕ chưa đủ căn cứ</span>
+        <p><b>Sổ quyết định</b> — ghi lại lý do bỏ đề tài này</p>
+        <div class="placeholder"></div>
+      </div>
+    `
+  }
+];
+
+const stepsEl = document.getElementById("steps");
+const screensEl = document.getElementById("screens");
+
+steps.forEach((s, i) => {
+  const btn = document.createElement("button");
+  btn.className = "step-btn" + (i===0 ? " active":"");
+  btn.innerHTML = `<span class="k">Bước ${s.key}</span>${s.title}`;
+  btn.onclick = () => show(i);
+  stepsEl.appendChild(btn);
+
+  const scr = document.createElement("div");
+  scr.className = "screen" + (i===0 ? " active":"");
+  scr.innerHTML = `
+    <div class="screen-head"><span>${s.title}</span><span>${s.sub}</span></div>
+    <div class="screen-body">${s.body}</div>
+  `;
+  screensEl.appendChild(scr);
+});
+
+function show(idx){
+  document.querySelectorAll(".step-btn").forEach((b,i)=>b.classList.toggle("active", i===idx));
+  document.querySelectorAll(".screen").forEach((s,i)=>s.classList.toggle("active", i===idx));
+}
+</script>
+</body>
+</html>
