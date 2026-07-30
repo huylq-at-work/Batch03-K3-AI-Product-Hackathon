@@ -83,7 +83,26 @@ export function normalize(obj: unknown): TurnResult {
     )
       ? (o.mode as TurnResult['mode'])
       : 'ask',
-    next_question: String(o.next_question ?? ''),
+    // Luật cứng "đúng MỘT câu hỏi": model (nhất là deepseek) đôi khi ghép hai câu
+    // ("...là khi nào? Hôm đó thế nào?"). Giữ đúng MỘT — và giữ câu MỞ (moi chuyện:
+    // "thế nào/ra sao/vì sao") thay vì câu neo thời gian ("khi nào"), vì câu mở mới
+    // nhiều context. Ép ở normalize để CẢ eval (gọi complete thẳng) lẫn app đều vá.
+    next_question: (() => {
+      const q = String(o.next_question ?? '').trim();
+      if ((q.match(/\?/g) ?? []).length <= 1) return q;
+      const parts = q
+        .split('?')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((s) => `${s}?`);
+      const MO = /(thế nào|ra sao|như thế nào|vì sao|tại sao|điều gì|cái gì|làm sao)/i;
+      const NEO = /(khi nào|bao giờ|lúc nào|hồi nào)/i;
+      const diem = (p: string) => (MO.test(p) ? 2 : 0) - (NEO.test(p) ? 1 : 0);
+      // Giữ câu điểm cao nhất; hoà thì giữ câu ĐẦU (thường là câu chính, có phần dẫn).
+      let best = parts[0];
+      for (const p of parts.slice(1)) if (diem(p) > diem(best)) best = p;
+      return best;
+    })(),
     node: rawNode
       ? {
           level: Number(rawNode.level ?? 1),
