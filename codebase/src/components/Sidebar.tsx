@@ -1,3 +1,11 @@
+import {
+  DownloadIcon,
+  Link2Icon,
+  LockClosedIcon,
+  LockOpen1Icon,
+  PlusIcon,
+  UpdateIcon,
+} from '@radix-ui/react-icons';
 import { agents, exportEvidence, exportTxtDatabase, transcripts } from '../store/db';
 import { readTraces } from '../llm';
 import type { SubAgent } from '../types';
@@ -39,7 +47,7 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <button className="newchat" onClick={onNewChat}>
-        + Cuộc tư vấn mới
+        <PlusIcon /> Cuộc tư vấn mới
       </button>
 
       <div className="sidesection">
@@ -65,31 +73,39 @@ export function Sidebar({
               </button>
               <div className="sideitemActions">
                 <button
+                  className="iconbtn"
                   title="Copy link chia sẻ"
+                  aria-label="Copy link"
                   onClick={() => {
                     void navigator.clipboard.writeText(`${location.origin}/#/s/${a.id}`);
                   }}
                 >
-                  link
+                  <Link2Icon />
                 </button>
                 <button
+                  className="iconbtn"
                   title="Gia hạn thêm 24h (cấp lại hạn cho link)"
+                  aria-label="Gia hạn"
                   onClick={() => {
                     agents.giaHan(a.id, Date.now());
                     onChanged();
                   }}
                 >
-                  ↻
+                  <UpdateIcon />
                 </button>
                 <button
+                  className="iconbtn"
                   title="Xuất evidence .md (R1)"
+                  aria-label="Xuất evidence"
                   disabled={n === 0}
                   onClick={() => taiVe(`evidence-${a.name}.md`, exportEvidence(a.id))}
                 >
-                  ⭳
+                  <DownloadIcon />
                 </button>
                 <button
+                  className="iconbtn"
                   title={a.visibility === 'public' ? 'Đặt private' : 'Đặt public'}
+                  aria-label="Đổi hiển thị"
                   onClick={() => {
                     agents.save({
                       ...a,
@@ -98,7 +114,7 @@ export function Sidebar({
                     onChanged();
                   }}
                 >
-                  {a.visibility === 'public' ? '🔓' : '🔒'}
+                  {a.visibility === 'public' ? <LockOpen1Icon /> : <LockClosedIcon />}
                 </button>
               </div>
             </div>
@@ -115,7 +131,7 @@ export function Sidebar({
           disabled={danhSach.length === 0}
           onClick={() => taiVe('khao-sat-database.txt', exportTxtDatabase())}
         >
-          ⭳ khao-sat-database.txt
+          <DownloadIcon /> khao-sat-database.txt
         </button>
       </div>
 
@@ -128,7 +144,7 @@ export function Sidebar({
           disabled={readTraces().length === 0}
           onClick={() => taiVe('traces.json', JSON.stringify(readTraces(), null, 2))}
         >
-          ⭳ traces.json ({readTraces().filter((t) => t.isReal).length} thật /{' '}
+          <DownloadIcon /> traces.json ({readTraces().filter((t) => t.isReal).length} thật /{' '}
           {readTraces().length})
         </button>
       </div>

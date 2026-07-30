@@ -1,4 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import * as Collapsible from '@radix-ui/react-collapsible';
+import {
+  ChevronDownIcon,
+  ClipboardIcon,
+  MagnifyingGlassIcon,
+  MixerHorizontalIcon,
+  PaperPlaneIcon,
+} from '@radix-ui/react-icons';
 import {
   ADVISOR_SYSTEM_PROMPT,
   advisorTools,
@@ -327,8 +335,10 @@ export function Advisor({
         {hienThi.length === 0 && (
           <>
             {/* Câu chào mở đầu mỗi session — bong bóng của cố vấn, không gọi API. */}
-            <div className="msg assistant">
-              <Dam text={LOI_CHAO} />
+            <div className="row-assistant">
+              <div className="msg assistant">
+                <Dam text={LOI_CHAO} />
+              </div>
             </div>
             <div className="notice small" style={{ maxWidth: 720, margin: '0 auto 8px' }}>
               Đang dùng <b>{provider.label}</b>
@@ -342,8 +352,10 @@ export function Advisor({
           m.role === 'tool_calls' ? (
             <ToolCalls key={i} calls={m.calls} ketQua={ketQuaTheoId} thinking={hienThinking} />
           ) : (
-            <div className={`msg ${m.role}`} key={i}>
-              <Dam text={m.text} />
+            <div className={`row-${m.role}`} key={i}>
+              <div className={`msg ${m.role}`}>
+                <Dam text={m.text} />
+              </div>
             </div>
           ),
         )}
@@ -352,7 +364,9 @@ export function Advisor({
             để họ biết chuyện gì đang xảy ra. */}
         {khaoSatMoi && (
           <button className="ksCard" onClick={() => onOpen(khaoSatMoi)}>
-            <div className="ksCardTop">📋 Khảo sát đã sẵn sàng</div>
+            <div className="ksCardTop">
+              <ClipboardIcon /> Khảo sát đã sẵn sàng
+            </div>
             <div className="ksCardName">{khaoSatMoi.name}</div>
             <div className="muted small">{khaoSatMoi.topic}</div>
             <div className="ksCardGo">Bấm để trả lời thử (bạn là phản hồi #1) →</div>
@@ -361,11 +375,17 @@ export function Advisor({
 
         {/* Bong bóng đang stream: chữ chạy ra dần. dangLam hiện khi chưa có mẩu nào. */}
         {stream && (
-          <div className="msg assistant">
-            <Dam text={stream} />
+          <div className="row-assistant">
+            <div className="msg assistant">
+              <Dam text={stream} />
+            </div>
           </div>
         )}
-        {busy && !stream && <div className="msg assistant busy">{dangLam}</div>}
+        {busy && !stream && (
+          <div className="row-assistant">
+            <div className="msg assistant busy">{dangLam}</div>
+          </div>
+        )}
         {error && <div className="err">{error}</div>}
 
         {/* Không im lặng sửa câu trả lời — hiện ra để người dùng biết chỗ nào đừng
@@ -397,13 +417,19 @@ export function Advisor({
             }
           }}
         />
-        <button className="primary" disabled={busy || !input.trim()} onClick={() => void send()}>
-          Gửi
+        <button
+          className="primary iconbtn"
+          disabled={busy || !input.trim()}
+          onClick={() => void send()}
+          aria-label="Gửi"
+        >
+          <PaperPlaneIcon />
         </button>
       </div>
       <p className="muted small center">
         Cố vấn chỉ nói về đề tài mà tool tra được ·{' '}
         <button className="linkbtn" onClick={() => setHienThinking((v) => !v)}>
+          <MixerHorizontalIcon width={12} height={12} />{' '}
           {hienThinking ? 'ẩn thinking' : 'hiện thinking'}
         </button>
       </p>
@@ -428,26 +454,32 @@ function ToolCalls({
 }) {
   if (thinking) {
     return (
-      <details className="thinking" open>
-        <summary>thinking · {calls.map((c) => c.name).join(', ')}</summary>
-        {calls.map((c, i) => (
-          <div key={i} className="thinkingItem">
-            <code>{c.name}({JSON.stringify(c.input)})</code>
-            <pre>{JSON.stringify(ketQua.get(c.id), null, 1)?.slice(0, 1200)}</pre>
-          </div>
-        ))}
-      </details>
+      <Collapsible.Root className="disclosure thinking" defaultOpen>
+        <Collapsible.Trigger className="disclosureTrigger">
+          <ChevronDownIcon className="chev" /> thinking · {calls.map((c) => c.name).join(', ')}
+        </Collapsible.Trigger>
+        <Collapsible.Content>
+          {calls.map((c, i) => (
+            <div key={i} className="thinkingItem">
+              <code>
+                {c.name}({JSON.stringify(c.input)})
+              </code>
+              <pre>{JSON.stringify(ketQua.get(c.id), null, 1)?.slice(0, 1200)}</pre>
+            </div>
+          ))}
+        </Collapsible.Content>
+      </Collapsible.Root>
     );
   }
 
   const webs = calls.filter((c) => c.name === 'web_search');
   if (webs.length === 0) return null; // các tool DB: ẩn
 
-  // Gom nguồn từ mọi lần web_search trong lượt.
-  const nguon = webs.flatMap((c) => {
-    const r = ketQua.get(c.id) as { nguon?: string[] } | undefined;
-    return r?.nguon ?? [];
-  });
+  const nguon = [
+    ...new Set(
+      webs.flatMap((c) => (ketQua.get(c.id) as { nguon?: string[] } | undefined)?.nguon ?? []),
+    ),
+  ];
   const host = (u: string) => {
     try {
       return new URL(u).hostname.replace(/^www\./, '');
@@ -457,22 +489,27 @@ function ToolCalls({
   };
 
   return (
-    <details className="websrc">
-      <summary>🔎 Đã tra web{nguon.length ? ` · ${nguon.length} nguồn` : ''}</summary>
-      {nguon.length === 0 ? (
-        <div className="muted small">Không có nguồn cụ thể cho lần tra này.</div>
-      ) : (
-        <ul>
-          {[...new Set(nguon)].map((u, i) => (
-            <li key={i}>
-              <a href={u} target="_blank" rel="noreferrer">
-                {host(u)}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </details>
+    <Collapsible.Root className="disclosure websrc">
+      <Collapsible.Trigger className="disclosureTrigger">
+        <ChevronDownIcon className="chev" />
+        <MagnifyingGlassIcon /> Đã tra web{nguon.length ? ` · ${nguon.length} nguồn` : ''}
+      </Collapsible.Trigger>
+      <Collapsible.Content>
+        {nguon.length === 0 ? (
+          <div className="muted small">Không có nguồn cụ thể cho lần tra này.</div>
+        ) : (
+          <ul>
+            {nguon.map((u, i) => (
+              <li key={i}>
+                <a href={u} target="_blank" rel="noreferrer">
+                  {host(u)}
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
 
