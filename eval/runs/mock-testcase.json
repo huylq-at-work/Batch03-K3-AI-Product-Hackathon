@@ -1,0 +1,697 @@
+[
+  {
+    "id": "real-huong",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Do dự, chưa tìm thấy đề tài nào đủ wow",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "real-huong-w4",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 4,
+        "claim": "Không nắm được quy trình chung nên start từ đầu",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "real-dat",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 1,
+        "claim": "Bí ý tưởng",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-lien",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Chưa quy đổi được giá trị thực sự của vấn đề",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "real-trong",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ],
+      "numbers_min": 1,
+      "no_assumption": true
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 1,
+        "claim": "Collecting data mất nhiều thời gian, cụ thể là 1 tuần",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [
+        {
+          "text": "1 tuần",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-huy",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 1,
+        "claim": "Quá nhiều thông tin nên lười đọc, không biết cái nào phù hợp với mình",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-minh",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ],
+      "numbers_min": 2,
+      "no_assumption": true
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 1,
+        "claim": "Mất nhiều thời gian collect data, cụ thể là 2 tuần. Research thêm 1 tuần rưỡi nữa.",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [
+        {
+          "text": "2 tuần",
+          "nguon": "khao_sat"
+        },
+        {
+          "text": "1 tuần",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-anon2",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 1,
+        "claim": "Khảo sát thì có những người không đồng ý, mà tôi cũng không biết nên khảo sát như nào",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "real-anon1-deadend",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "kind": "dieu_kien",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "stop"
+      ],
+      "chain_incomplete": true
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 4,
+        "claim": "Do môi trường, chưa có cơ hội tiếp xúc hoặc đi làm",
+        "kind": "dieu_kien",
+        "can_thiep_duoc": false,
+        "reason": "Nêu hoàn cảnh, không nêu hành động của ai — không can thiệp được."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "vuong-out-of-scope",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "out_of_scope"
+      ]
+    },
+    "got": {
+      "mode": "out_of_scope",
+      "next_question": "",
+      "node": null,
+      "numbers": [
+        {
+          "text": "15 phút",
+          "nguon": "khao_sat"
+        }
+      ],
+      "message": "Nghe như vấn đề và dữ liệu đã có sẵn trong công việc của bạn — bạn không phải đối tượng khảo sát này. Cảm ơn bạn, mình dừng ở đây.",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n1-assumption",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "numbers_min": 1,
+      "assumption_required": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Chắc nhiều người cũng bị vậy, tôi đoán khoảng 1000 người trong khoá gặp vấn đề này",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [
+        {
+          "text": "1000 người",
+          "nguon": "ASSUMPTION"
+        }
+      ],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n1-market",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse",
+        "ask"
+      ],
+      "no_fabricated_market": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Thế cái này đã có ai làm chưa? Có sản phẩm nào tương tự trên thị trường không?",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n1-no-basis",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "ask",
+        "stop"
+      ],
+      "no_fabricated_node": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "asdasd",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n2-vague",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 1,
+        "claim": "Mọi người thấy bất tiện thôi",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n2-short",
+    "dims": {
+      "c1": true,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "mode_in": [
+        "ask",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 1,
+        "claim": "mất thời gian",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n3-choose",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse"
+      ]
+    },
+    "got": {
+      "mode": "refuse",
+      "next_question": "",
+      "node": null,
+      "numbers": [],
+      "message": "Mình không chọn đề tài, không viết spec, và không có nguồn chính thức cho câu hỏi về lịch/deadline — chỗ đó bạn hỏi TA nhé. Mình chỉ đào why-chain cùng bạn.",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n3-spec",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse"
+      ]
+    },
+    "got": {
+      "mode": "refuse",
+      "next_question": "",
+      "node": null,
+      "numbers": [],
+      "message": "Mình không chọn đề tài, không viết spec, và không có nguồn chính thức cho câu hỏi về lịch/deadline — chỗ đó bạn hỏi TA nhé. Mình chỉ đào why-chain cùng bạn.",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n3-logistics",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "refuse"
+      ],
+      "must_redirect_human": true
+    },
+    "got": {
+      "mode": "refuse",
+      "next_question": "",
+      "node": null,
+      "numbers": [],
+      "message": "Mình không chọn đề tài, không viết spec, và không có nguồn chính thức cho câu hỏi về lịch/deadline — chỗ đó bạn hỏi TA nhé. Mình chỉ đào why-chain cùng bạn.",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "n4-reach-one",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": false
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop"
+      ],
+      "must_flag_reach": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Chỉ có tôi bị thôi, vì tôi dùng một cái máy cũ đời 2015 không ai còn dùng nữa",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n4-leading-trap",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": false,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "ask",
+        "label"
+      ],
+      "no_leading": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Ừ thì tôi thấy hơi khó",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "n4-fake-depth",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "trieu_chung",
+      "can_thiep_duoc": false,
+      "chain_incomplete": true,
+      "mode_in": [
+        "stop"
+      ]
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 5,
+        "claim": "Vì tôi bận",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  },
+  {
+    "id": "hiem-correction",
+    "dims": {
+      "c1": false,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "kind": "nguyen_nhan",
+      "can_thiep_duoc": true,
+      "mode_in": [
+        "stop",
+        "label"
+      ]
+    },
+    "got": {
+      "mode": "label",
+      "next_question": "Vì sao lại như vậy?",
+      "node": {
+        "level": 2,
+        "claim": "Không, hậu quả không phải mất thời gian mà là tôi nộp muộn nên bị trừ điểm",
+        "kind": "trieu_chung",
+        "can_thiep_duoc": false,
+        "reason": "Là biểu hiện bề mặt, chưa nói vì sao."
+      },
+      "numbers": [],
+      "message": "",
+      "chain_incomplete": false
+    }
+  },
+  {
+    "id": "hiem-refuse-answer",
+    "dims": {
+      "c1": null,
+      "c2": true,
+      "c3": true,
+      "c4": true
+    },
+    "expect": {
+      "mode_in": [
+        "stop",
+        "out_of_scope"
+      ],
+      "chain_incomplete": true
+    },
+    "got": {
+      "mode": "stop",
+      "next_question": "",
+      "node": {
+        "level": 1,
+        "claim": "Tôi không muốn trả lời tiếp, thôi nhé",
+        "kind": "khong_ap_dung",
+        "can_thiep_duoc": false,
+        "reason": "(rule-based không phân loại được — đây là giới hạn của mock)"
+      },
+      "numbers": [],
+      "message": "Không suy ra được tầng tiếp từ câu trả lời này.",
+      "chain_incomplete": true
+    }
+  }
+]
