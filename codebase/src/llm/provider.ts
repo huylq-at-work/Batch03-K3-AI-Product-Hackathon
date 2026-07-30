@@ -17,8 +17,8 @@ export interface LlmProvider {
   /**
    * Một lượt hội thoại CÓ TOOL, dùng cho cố vấn (tra catalog + tạo khảo sát).
    *
-   * `undefined` = provider không hỗ trợ tool (mock, gemini) → cố vấn chạy ở chế độ
-   * không tool: vẫn tư vấn được, chỉ không tra được đề tài và không tự tạo khảo sát.
+   * `undefined` = provider không hỗ trợ tool → cố vấn không thể chạy luồng điều phối.
+   * Mock có một tool loop rule-based để luồng demo vẫn chạy mà không cần API key.
    *
    * Kiểu TRUNG LẬP, không theo SDK nào. Bản trước khai `Anthropic.MessageParam[]`
    * nên chỉ Anthropic dùng được — có key OpenAI mà tính năng chính không chạy.

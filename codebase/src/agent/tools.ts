@@ -157,8 +157,14 @@ export const TAO_KHAO_SAT_TOOL = {
  * dùng, thay vì làm vỡ cả lượt.
  */
 export async function runTool(name: string, input: Record<string, unknown>): Promise<unknown> {
-  // Tầng 3 — từ chối thực thi kể cả khi lời gọi lọt qua (history cũ, prompt injection).
-  if (deTaiToolsDisabled()) {
+  // Tầng 3 — chỉ chặn NHÓM TOOL CATALOG. `tao_khao_sat`, `web_search` và
+  // `tong_hop_khao_sat` vẫn phải chạy; cờ này chỉ có nghĩa là không dùng catalog.
+  // Bản trước return sớm cho mọi tên tool nên bật cờ là cố vấn không tạo được
+  // khảo sát, trái với mô tả của chính VITE_DISABLE_DE_TAI_TOOLS.
+  if (
+    deTaiToolsDisabled() &&
+    ALL_CATALOG_TOOLS.some((tool) => tool.name === name)
+  ) {
     return {
       error: 'tool_da_tat',
       message:
