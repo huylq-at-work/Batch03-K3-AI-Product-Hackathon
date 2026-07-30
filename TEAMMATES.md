@@ -49,9 +49,12 @@ R1 (15đ) + R6 (8đ) + demo cộng lại nhiều điểm hơn R5 (8đ) của pro
   ≥2 case/nhóm và ID không trùng trước khi gọi bộ chấm chung.
 - ✅ Chạy đủ 23 case bằng mock và giữ nguyên cả case fail tại
   `eval/runs/mock-testcase.md` + `.json`: C1 50,0% · C2 100% · C3 78,3% · C4 95,7%.
-- 🔴 **Thu thêm ≥12 người ngoài nhóm** để chuẩn A đạt 20 người ngoài nhóm.
-- 🔴 Thêm ô **`hậu_quả_gì`** cho mọi chain — cả 12 chain hiện tại đều thiếu. Một câu:
+- ✅ Phỏng vấn thêm 5 người ngoài nhóm trong đợt 2, nối thành `KS-05–KS-09` tại
+  `evidence/survey-log.md` mà không ghi đè 12 người trước; cập nhật `spec.md` §1–§2.
+- 🔴 **Thu thêm ≥7 người ngoài nhóm** để chuẩn A đạt 20 người ngoài nhóm.
+- 🔴 Thêm ô **`hậu_quả_gì`** cho mọi chain — cả 17 chain hiện tại đều thiếu đầy đủ. Một câu:
   *"Việc đó khiến bạn phải trả giá gì?"*
+- 🔴 Hỏi lại vai của `Ẩn danh 3–4` và `KS-05–KS-09`, câu hỏi từng lượt của đợt 2 và đồng thuận sử dụng dữ liệu.
 - Hỏi về **lần gần nhất**, không hỏi ý kiến. *"Lần gần nhất bạn tìm đề tài, mất bao lâu?"*
   chứ không phải *"bạn có cần công cụ X không?"* — ai cũng trả lời có, dữ liệu vô dụng.
 - Log nguyên văn: câu đã hỏi · từng câu trả lời · ai trả lời. Không có log thì **không
@@ -127,10 +130,11 @@ nhiệm chạy `npm run test:testcase` và giải thích báo cáo mock; lệnh 
 
 ## 5. 🔴 Hai thứ chặn đường cả nhóm
 
-### 5.1 — Chuẩn A hiện có **8 người ngoài nhóm**, còn thiếu 12
+### 5.1 — Chuẩn A hiện có **13 người ngoài nhóm**, còn thiếu 7
 
-Chuẩn A đòi **≥20 người NGOÀI NHÓM**. Sau khi Hướng đối chiếu 5 interview mới với 9 chain
-cũ và gộp 2 chain trùng, khảo sát có **12 người duy nhất**: 4 trong nhóm và 8 ngoài nhóm.
+Chuẩn A đòi **≥20 người NGOÀI NHÓM**. Sau đợt 1, Hướng đã đối chiếu 5 interview với 9
+chain cũ và gộp 2 chain trùng. Đợt 2 nối thêm 5 người mới, nên khảo sát hiện có
+**17 người duy nhất**: 4 trong nhóm và 13 ngoài nhóm.
 
 | Người trong khảo sát | Vai khai trong khảo sát | Trong nhóm? |
 |---|---|---|
@@ -138,13 +142,13 @@ cũ và gộp 2 chain trùng, khảo sát có **12 người duy nhất**: 4 tron
 | Đạt | SV năm 4 | ❌ **thành viên nhóm** |
 | Liên | SV năm 3 | ❌ **thành viên nhóm** |
 | Huy | đi làm 3 năm | ❌ **thành viên nhóm** |
-| Trọng · Vương · Minh · Ẩn danh 1 · Ẩn danh 2 · Ẩn danh 3 · Ẩn danh 4 · Mai Hồng Sơn | | ✅ ngoài nhóm |
+| Trọng · Vương · Minh · Ẩn danh 1–4 · KS-03 · KS-05–KS-09 | | ✅ ngoài nhóm |
 
-→ **n ngoài nhóm = 8.** Vương là negative case rõ; Ẩn danh 3 được tính bảo thủ là chưa
-xác nhận vì câu mở đầu nói chưa gặp khó khăn. Còn **6/8 người ngoài nhóm xác nhận friction**.
+→ **n ngoài nhóm = 13.** Vương là negative case rõ; Ẩn danh 3 được tính bảo thủ là chưa
+xác nhận vì câu mở đầu nói chưa gặp khó khăn. Còn **11/13 người ngoài nhóm xác nhận friction**.
 
-**Cần thu thêm ≥12 người ngoài nhóm** để đạt chuẩn A. `spec.md` §1 báo cáo bằng phân số
-`6/8`, không dùng tỷ lệ gộp thành viên nhóm để làm số đẹp.
+**Cần thu thêm ≥7 người ngoài nhóm** để đạt chuẩn A. `spec.md` §1 báo cáo bằng phân số
+`11/13`, không dùng tỷ lệ gộp thành viên nhóm để làm số đẹp.
 
 Bốn chain của thành viên nhóm **vẫn giữ trong spec** — dùng làm bối cảnh và làm golden set
 (dữ liệu thật, có lỗi đã biết trước), chỉ **không tính vào n của chuẩn A**. Ghi rõ chỗ nào
