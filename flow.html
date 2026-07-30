@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pain Compiler — Flow chính</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#ffffff; --ink:#1c1a17; --ink-2:#57524b; --ink-3:#8a8378;
+    --line:#e0dcd4; --line-2:#c9c3b8;
+    --star:#b7791f; --star-bg:#fdf6e6; --star-line:#e0b355;
+    --ok:#2f6b4f; --ok-bg:#eef6f1; --no:#a03d33; --no-bg:#fbeeec;
+    --mock:#4a6a8a; --mock-bg:#eef2f7;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#131211; --panel:#1c1b19; --ink:#f0ede8; --ink-2:#b3aca2; --ink-3:#837c72;
+      --line:#302e2b; --line-2:#454239;
+      --star:#e3b558; --star-bg:#241f13; --star-line:#6b5426;
+      --ok:#7fc3a0; --ok-bg:#16241d; --no:#e08b80; --no-bg:#2a1b19;
+      --mock:#8fb2d4; --mock-bg:#171d24;
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#fbfaf8; --panel:#ffffff; --ink:#1c1a17; --ink-2:#57524b; --ink-3:#8a8378;
+    --line:#e0dcd4; --line-2:#c9c3b8;
+    --star:#b7791f; --star-bg:#fdf6e6; --star-line:#e0b355;
+    --ok:#2f6b4f; --ok-bg:#eef6f1; --no:#a03d33; --no-bg:#fbeeec;
+    --mock:#4a6a8a; --mock-bg:#eef2f7;
+  }
+  :root[data-theme="dark"]{
+    --bg:#131211; --panel:#1c1b19; --ink:#f0ede8; --ink-2:#b3aca2; --ink-3:#837c72;
+    --line:#302e2b; --line-2:#454239;
+    --star:#e3b558; --star-bg:#241f13; --star-line:#6b5426;
+    --ok:#7fc3a0; --ok-bg:#16241d; --no:#e08b80; --no-bg:#2a1b19;
+    --mock:#8fb2d4; --mock-bg:#171d24;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:40px 20px 72px}
+
+  /* ---- header ---- */
+  header{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:34px}
+  .kicker{font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
+  h1{margin:0;font-size:clamp(30px,6vw,46px);line-height:1.08;letter-spacing:-.02em;font-weight:680}
+  h1 .en{color:var(--ink-3);font-weight:400}
+  .tagline{margin:12px 0 0;color:var(--ink-2);font-size:17px;max-width:62ch}
+  .sub{
+    margin:16px 0 0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+    font-size:14.5px;color:var(--ink-2)
+  }
+  .sub span{
+    font:600 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);
+    border:1px solid var(--line-2);border-radius:20px;padding:4px 9px;white-space:nowrap
+  }
+  .sub b{color:var(--star);font-weight:660}
+  .slice{
+    margin-top:22px;padding:16px 18px;border-left:3px solid var(--star);
+    background:var(--star-bg);border-radius:0 6px 6px 0;font-size:15px;color:var(--ink)
+  }
+  .slice b{color:var(--star)}
+  .slice .lbl{display:block;font:600 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--star);margin-bottom:8px}
+
+  h2{
+    font-size:12px;font-family:var(--mono);font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-3);margin:52px 0 20px;padding-bottom:9px;border-bottom:1px solid var(--line)
+  }
+
+  /* ---- flow ---- */
+  .flow{display:flex;flex-direction:column;align-items:stretch;gap:0}
+  .node{
+    background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:15px 18px;position:relative
+  }
+  .node .top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .node .num{font:600 11px/1 var(--mono);color:var(--ink-3);min-width:14px}
+  .node .name{font-weight:640;font-size:16px;letter-spacing:-.01em}
+  .node .desc{margin:7px 0 0;color:var(--ink-2);font-size:14.5px}
+  .node ul{margin:9px 0 0;padding-left:19px;color:var(--ink-2);font-size:14.5px}
+  .node li{margin:4px 0}
+  .node code{font-family:var(--mono);font-size:12.5px;background:var(--mock-bg);color:var(--mock);padding:1.5px 5px;border-radius:4px;white-space:nowrap}
+
+  .tag{
+    font:600 10px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;
+    padding:4px 8px;border-radius:20px;border:1px solid var(--line-2);color:var(--ink-3);white-space:nowrap
+  }
+  .tag.sketch{}
+  .tag.mock{color:var(--mock);border-color:var(--mock);background:var(--mock-bg)}
+  .tag.work{color:var(--star);border-color:var(--star-line);background:var(--star-bg)}
+  .spacer{flex:1}
+
+  /* arrow between nodes */
+  .arrow{height:26px;display:flex;justify-content:center;align-items:center;position:relative;flex:none}
+  .arrow::before{content:"";width:1.5px;height:100%;background:var(--line-2)}
+  .arrow::after{
+    content:"";position:absolute;bottom:0;width:0;height:0;
+    border-left:4.5px solid transparent;border-right:4.5px solid transparent;border-top:6px solid var(--line-2)
+  }
+  .arrow span{
+    position:absolute;left:50%;margin-left:14px;top:50%;transform:translateY(-50%);
+    font:600 10.5px/1 var(--mono);color:var(--ink-3);white-space:nowrap
+  }
+
+  /* input node */
+  .node.input{border-style:dashed;background:transparent}
+  .node.input .row{display:flex;gap:10px;margin-top:11px;flex-wrap:wrap}
+  .node.input .row > div{
+    flex:1 1 220px;border:1px solid var(--line);border-radius:7px;padding:11px 13px;background:var(--panel)
+  }
+  .node.input .row b{display:block;font-size:14px;margin-bottom:3px}
+  .node.input .row small{color:var(--ink-3);font-size:13px;line-height:1.45;display:block}
+
+  /* star node */
+  .node.star{
+    border:1.5px solid var(--star-line);background:var(--star-bg);
+    box-shadow:0 1px 0 var(--star-line), 0 8px 26px -18px var(--star)
+  }
+  .node.star .name{color:var(--star)}
+  .decisions{display:flex;gap:11px;margin-top:14px;flex-wrap:wrap}
+  .decision{
+    flex:1 1 240px;background:var(--panel);border:1px solid var(--star-line);border-radius:7px;padding:12px 14px
+  }
+  .decision .d-lbl{font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--star);margin-bottom:7px}
+  .decision p{margin:0;font-size:14px;color:var(--ink-2)}
+  .decision p b{color:var(--ink)}
+  .loopnote{
+    margin-top:13px;padding:11px 13px;border:1px dashed var(--star-line);border-radius:7px;
+    font-size:14px;color:var(--ink-2);background:transparent
+  }
+  .loopnote b{color:var(--star)}
+
+  /* gate / exit */
+  .exit{
+    border:1px solid var(--no);background:var(--no-bg);border-radius:8px;padding:12px 15px;
+    font-size:14px;color:var(--ink-2);margin:0 0 0 auto;max-width:420px
+  }
+  .exit b{color:var(--no);display:block;font-size:13.5px;margin-bottom:3px}
+  .sidebranch{display:flex;align-items:center;gap:12px;margin:10px 0 10px 26px}
+  .sidebranch .hook{width:26px;height:1.5px;background:var(--line-2);flex:none;position:relative}
+  .sidebranch .hook::after{
+    content:"";position:absolute;right:0;top:50%;transform:translateY(-50%);width:0;height:0;
+    border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;border-left:6px solid var(--line-2)
+  }
+
+  /* split */
+  .split{display:flex;gap:14px;flex-wrap:wrap;margin-top:0}
+  .split > div{flex:1 1 280px;border-radius:9px;padding:15px 17px;border:1px solid var(--line)}
+  .split .yes{border-color:var(--ok);background:var(--ok-bg)}
+  .split .no{border-color:var(--no);background:var(--no-bg)}
+  .split h3{margin:0 0 8px;font-size:14.5px;letter-spacing:-.01em}
+  .split .yes h3{color:var(--ok)} .split .no h3{color:var(--no)}
+  .split p{margin:0;font-size:14px;color:var(--ink-2)}
+  .split ol{margin:9px 0 0;padding-left:19px;font-size:14px;color:var(--ink-2)}
+  .split li{margin:3px 0}
+  .forkline{height:22px;display:flex;justify-content:center;flex:none}
+  .forkline::before{content:"";width:1.5px;height:100%;background:var(--line-2)}
+
+  /* ---- tables / cards ---- */
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
+  th,td{text-align:left;padding:11px 15px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{
+    font:600 10.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+    background:var(--bg);position:sticky;top:0
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td.cls{white-space:nowrap;font-weight:640}
+  td b{color:var(--ink)}
+  .c1{color:var(--no)} .c2{color:var(--star)} .c3{color:var(--mock)} .c4{color:var(--ok)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px 16px}
+  .card .n{font:600 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+  .card p{margin:0;font-size:14px;color:var(--ink-2)}
+  .card.bar{border-color:var(--star-line);background:var(--star-bg)}
+  .card.bar .n{color:var(--star)}
+
+  ul.plain{list-style:none;margin:0;padding:0}
+  ul.plain li{padding:10px 0;border-bottom:1px solid var(--line);color:var(--ink-2);font-size:14.5px;display:flex;gap:11px}
+  ul.plain li:last-child{border-bottom:none}
+  ul.plain .x{color:var(--no);font-weight:700;flex:none;width:14px}
+
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px}
+  footer code{font-family:var(--mono);font-size:12.5px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px}
+  .legend span{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .dot.w{background:var(--star)} .dot.m{background:var(--mock)} .dot.s{background:var(--line-2)}
+
+  @media (max-width:560px){
+    .wrap{padding:28px 15px 56px}
+    .arrow span{position:static;margin:0 0 0 10px;transform:none}
+    .exit{margin-left:0;max-width:none}
+    .sidebranch{margin-left:0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Mini Hackathon AI · Batch 03 · Hướng C — Làn mở</div>
+  <h1>Pain Compiler</h1>
+  <p class="tagline">Từ linh cảm đến bài toán chấm được. Compiler khi thiếu thông tin thì <em>báo lỗi</em> — nó không đoán rồi sinh ra binary sai.</p>
+  <p class="sub"><span>Lát cắt build hôm nay</span> <b>Đào Gốc</b> — khảo sát 5-why thích ứng · stage ★ bên dưới</p>
+
+  <div class="slice">
+    <span class="lbl">Lát cắt · một câu</span>
+    Học viên cần bằng chứng cho pain của mình · muốn phỏng vấn 5 người mà moi ra nguyên nhân gốc thay vì câu trả lời lịch sự · AI quyết định <b>câu hỏi tiếp theo là gì và chain đã tới nguyên nhân can thiệp được hay chưa</b> · kết quả là một 5-why chain có nhãn từng tầng kèm cảnh báo chain hỏng.
+  </div>
+</header>
+
+<h2>Flow chính</h2>
+
+<div class="flow">
+
+  <!-- INPUT -->
+  <div class="node input">
+    <div class="top"><span class="num">IN</span><span class="name">Đầu vào — hai dạng</span></div>
+    <div class="row">
+      <div>
+        <b>Đã có đề tài</b>
+        <small>Agent <em>stress-test</em> đề tài, không phục vụ đề tài. Có quyền kết luận “chưa đủ căn cứ”.</small>
+      </div>
+      <div>
+        <b>Chỉ có môi trường + linh cảm</b>
+        <small>Cho người chưa có đề tài nào — 2/8 người khảo sát thuộc nhóm này (Đạt, Ẩn danh 1).</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- S0 -->
+  <div class="node">
+    <div class="top">
+      <span class="num">0</span><span class="name">persona-in — sẽ hỏi ai?</span>
+      <span class="spacer"></span><span class="tag sketch">Sketch</span>
+    </div>
+    <p class="desc">Chốt đối tượng phỏng vấn <em>trước</em> khi soạn câu hỏi. Persona khai báo: <b>học viên khoá AI Thực Chiến chưa có domain nghề để lấy pain và data.</b></p>
+  </div>
+
+  <div class="sidebranch">
+    <span class="hook"></span>
+    <div class="exit">
+      <b>Ngoài đối tượng → dừng</b>
+      Profile “Vương”: pain đã có sẵn từ công việc, data lấy được trong 15 phút. Người này không cần sản phẩm — và việc bắt họ đi hết flow chỉ làm họ chậm lại.
+    </div>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- STAR -->
+  <div class="node star">
+    <div class="top">
+      <span class="num">1</span><span class="name">★ Khảo sát thích ứng 5-why</span>
+      <span class="spacer"></span><span class="tag work">Working · AI thật</span>
+    </div>
+    <p class="desc">Quyết định trung tâm của sản phẩm. Đây là stage <b>duy nhất</b> tạo ra bằng chứng mới từ bên ngoài đầu người dùng — bốn stage còn lại chỉ suy luận trên những gì đã có.</p>
+
+    <div class="decisions">
+      <div class="decision">
+        <div class="d-lbl">Quyết định AI · 1</div>
+        <p><b>Câu hỏi tiếp theo là gì?</b> Sinh từ nội dung câu trả lời vừa nhận. Google Form không làm được — không phải vì Form yếu, mà vì Form <em>tĩnh</em>.</p>
+      </div>
+      <div class="decision">
+        <div class="d-lbl">Quyết định AI · 2</div>
+        <p><b>Tầng này thuộc loại gì?</b> Gán nhãn <code>nguyên_nhân</code> / <code>điều_kiện</code> / <code>triệu_chứng</code> kèm <code>can_thiệp_được</code>.</p>
+      </div>
+    </div>
+
+    <div class="loopnote">
+      <b>Điều kiện dừng:</b> dừng khi đạt <code>can_thiệp_được: true</code> — <b>không</b> dừng ở “đã đủ 5 câu”. Một chain 3 tầng tới gốc tốt hơn một chain 5 tầng kết thúc ở <code>điều_kiện</code>.
+    </div>
+  </div>
+
+  <div class="arrow"><span>chain có nhãn từng tầng</span></div>
+
+  <!-- S2 -->
+  <div class="node">
+    <div class="top">
+      <span class="num">2</span><span class="name">persona-out — gom cụm câu trả lời</span>
+      <span class="spacer"></span><span class="tag mock">Mock</span>
+    </div>
+    <p class="desc">Persona <em>rút ra từ dữ liệu</em>, khác với persona-in đã giả định. Đây là chỗ trục thật hiện ra — khảo sát n=9 đã tự tách làm hai nhóm: <b>có domain sẵn</b> (15 phút) vs <b>không có domain</b> (~4 tuần).</p>
+  </div>
+
+  <div class="arrow"></div>
+
+  <!-- S3 -->
+  <div class="node">
+    <div class="top">
+      <span class="num">3</span><span class="name">Sàng — đủ căn cứ chưa?</span>
+      <span class="spacer"></span><span class="tag mock">Mock</span>
+    </div>
+    <ul>
+      <li>Pain có đủ 4 ô: <code>ai</code> · <code>đang_làm_gì</code> · <code>vướng_đâu</code> · <code>hậu_quả_gì</code></li>
+      <li>Mỗi con số có <code>nguồn</code>. Nguồn = <code>ASSUMPTION</code> thì <b>không được tính vào verdict</b>.</li>
+    </ul>
+  </div>
+
+  <div class="forkline"></div>
+
+  <div class="split">
+    <div class="yes">
+      <h3>✓ Đủ căn cứ</h3>
+      <ol>
+        <li><b>Xác định AI leverage</b> — checklist, không cần AI</li>
+        <li><b>Brainstorm MVP</b> — template. Cố ý <em>không</em> để AI sinh hộ: user phải giữ quyền sở hữu vấn đề.</li>
+      </ol>
+    </div>
+    <div class="no">
+      <h3>✕ Chưa đủ căn cứ</h3>
+      <p><b>Sổ quyết định</b> — ghi lại bỏ vì sao, để lần sau không đi lại đường cũ. Đây là câu trả lời cho Hướng: <em>“mất công, làm lại từ đầu.”</em></p>
+    </div>
+  </div>
+
+</div>
+
+<h2>Bốn đường đi của trải nghiệm</h2>
+
+<div class="scroll">
+<table>
+  <thead><tr><th>Đường</th><th>Kịch bản</th><th>Hành vi mong muốn</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="cls">Happy</td>
+      <td>Người trả lời mô tả rõ, chain tới <code>nguyên_nhân</code></td>
+      <td>Dừng đúng lúc, xuất chain có nhãn + nguồn</td>
+    </tr>
+    <tr>
+      <td class="cls c2">Low-confidence ②</td>
+      <td>Câu trả lời kiểu <em>“thấy bất tiện”</em></td>
+      <td>Hỏi lại <b>đúng một</b> câu vào bước cụ thể. Không tự điền.</td>
+    </tr>
+    <tr>
+      <td class="cls c1">Failure ①</td>
+      <td>Chain cụt ở <em>“do môi trường”</em></td>
+      <td>Gán <code>can_thiệp_được: false</code>, báo <b>chain chưa tới gốc</b>. Không bịa tầng tiếp.</td>
+    </tr>
+    <tr>
+      <td class="cls">Correction</td>
+      <td><em>“Không, hậu quả không phải mất thời gian mà là nộp muộn”</em></td>
+      <td>Cập nhật ô <code>hậu_quả_gì</code>, <b>tính lại</b> verdict, ghi vào sổ</td>
+    </tr>
+    <tr>
+      <td class="cls c3">Ngoài phạm vi ③</td>
+      <td><em>“Chọn hộ tôi đề tài đi”</em></td>
+      <td>Từ chối + trả về đúng 3 câu user phải tự trả lời</td>
+    </tr>
+    <tr>
+      <td class="cls c4">Đặc thù domain ④</td>
+      <td>Pain nghe hay nhưng reach = 1 người</td>
+      <td><em>“Đáng giải quyết cá nhân, chưa đáng làm dự án.”</em></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Non-goals — bản build không được vi phạm</h2>
+
+<ul class="plain">
+  <li><span class="x">✕</span><span>Không sinh pain hoặc ý tưởng thay người dùng</span></li>
+  <li><span class="x">✕</span><span>Không phát biểu về thị trường hay <em>“đã có ai làm chưa”</em> — không có tool search thì không có quyền nói</span></li>
+  <li><span class="x">✕</span><span>Không viết spec, không chọn đề tài</span></li>
+  <li><span class="x">✕</span><span>Không chấm đề tài bằng thang điểm số (7.5/10 là bịa)</span></li>
+</ul>
+
+<h2>Kiểm thử</h2>
+
+<div class="cards">
+  <div class="card bar">
+    <div class="n">Quality bar · chốt 23:59 N1</div>
+    <p>Đạt khi <b>≥70%</b> chain có nhãn tầng cuối khớp nhãn của <b>2 người ngoài nhóm chấm độc lập</b>, VÀ <b>100%</b> chain không chứa câu hỏi mớm đáp án.</p>
+  </div>
+  <div class="card">
+    <div class="n">Golden set · ≥20 case</div>
+    <p>9 chain khảo sát thật (lỗi đã biết trước: <code>"do môi trường"</code> = điều kiện · assumption của người hỏi · Vương không phải why-chain · cả 9 thiếu ô <em>hậu quả</em>) + ~11 case phủ 4 lớp chỗ khó.</p>
+  </div>
+  <div class="card">
+    <div class="n">Chiều chất lượng — chọn nhị phân</div>
+    <p>Nhãn tầng đúng/sai ✓ · có câu mớm đáp án hay không ✓ · <s>“câu hỏi hay không”</s> — chủ quan, không đưa vào bar.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="legend">
+    <span><i class="dot w"></i>Working — AI thật, có log/trace</span>
+    <span><i class="dot m"></i>Mock — rule-based</span>
+    <span><i class="dot s"></i>Sketch — prompt/template</span>
+  </div>
+  <code>flow.html</code> · sơ đồ hỗ trợ <code>spec.md</code> §4 &amp; §6 · <b>Pain Compiler</b> → lát cắt <b>Đào Gốc</b>
+</footer>
+
+</div>
+</body>
+</html>
