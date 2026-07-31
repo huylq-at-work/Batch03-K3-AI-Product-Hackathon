@@ -2,7 +2,7 @@
 
 > Mini Hackathon AI — Batch 03 (Khoá 3) · Đại học VinUni
 > Đề tài: **Xây dựng agent AI khảo sát 5-why thích ứng giúp học viên xác định painpoint có căn cứ cho dự án**
-> Lát cắt build: **Đào Gốc** — khảo sát 5-why thích ứng
+> Lát cắt build: **Fathom** — khảo sát 5-why thích ứng
 > Repo: `Batch03-K3-AI-Product-Hackathon` · Spec: [`spec.md`](spec.md) · Flow: [`flow.html`](flow.html)
 
 ## 1. Thành viên

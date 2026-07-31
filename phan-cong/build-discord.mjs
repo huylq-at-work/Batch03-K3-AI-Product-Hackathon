@@ -25,10 +25,10 @@ const PARTS = [
 const preamble = (p) => `> **File này là phần ${p.n}/4 của nhóm — ${p.ten}.**
 > Bản tự chứa để đọc rời. Bản gốc + 3 phần còn lại: ${REPO}/tree/main/phan-cong
 
-# Nhóm [XX] · Đào Gốc — Phần ${p.n}: ${p.ten}
+# Nhóm [XX] · Fathom — Phần ${p.n}: ${p.ten}
 
 **Đề tài:** Xây dựng agent AI khảo sát 5-why thích ứng giúp học viên xác định painpoint
-có căn cứ cho dự án. **Lát cắt build:** Đào Gốc — khảo sát 5-why thích ứng.
+có căn cứ cho dự án. **Lát cắt build:** Fathom — khảo sát 5-why thích ứng.
 
 Đọc trước khi bắt đầu: [\`spec.md\`](${REPO}/blob/main/spec.md) ·
 [\`flow.html\`](${REPO}/blob/main/flow.html) (mở bằng browser, sơ đồ flow)

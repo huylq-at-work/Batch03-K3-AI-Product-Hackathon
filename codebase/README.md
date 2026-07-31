@@ -1,6 +1,6 @@
-# codebase — Đào Gốc
+# codebase — Fathom
 
-Prototype cho lát cắt **Đào Gốc** (khảo sát 5-why thích ứng). Xem [`../spec.md`](../spec.md)
+Prototype cho lát cắt **Fathom** (khảo sát 5-why thích ứng). Xem [`../spec.md`](../spec.md)
 và [`../flow.html`](../flow.html) cho thiết kế.
 
 ## Chạy

@@ -1,4 +1,4 @@
-# AI SPEC — Đào Gốc: khảo sát 5-why thích ứng · Nhóm [D305-A1] · Zone [X]
+# AI SPEC — Fathom: khảo sát 5-why thích ứng · Nhóm [D305-A1] · Zone [X]
 
 **Đề tài:** Xây dựng agent AI khảo sát 5-why thích ứng giúp học viên xác định painpoint có căn cứ cho dự án
 
@@ -21,7 +21,7 @@ Không phải "sinh viên nói chung". Ba thứ làm vai này cụ thể và **�
 2. **Artifact gây pain tồn tại và đo được** — 360 đề tài, 21 khối, **8,0 giờ đọc** nếu đọc hết; chỉ **4,7%** đề tài nêu số liệu định lượng (chi tiết: Evidence chuẩn B bên dưới). Không phải "sinh viên thấy bất tiện".
 3. **Job có mốc bắt đầu và kết thúc** — bắt đầu khi nhận file, kết thúc khi chốt được một `Mã Đề` **và** nói được pain thật bên trong nó là gì.
 
-> **Hai loại "đề tài" trong repo này — đừng lẫn.** `Danh_sach_de_tai.xlsx` là catalog **capstone**: 78,1% đề đòi deploy online, 63,9% đòi đăng nhập, 79,2% đòi ≥2 vai trò, max 2 team/đề. Còn `01-de-bai.md` của mini-hackathon nói rõ *"không yêu cầu deploy"*. **Đào Gốc là deliverable hackathon; người dùng của nó là sinh viên đang chọn đề capstone.** Persona ở trên nói về loại thứ hai.
+> **Hai loại "đề tài" trong repo này — đừng lẫn.** `Danh_sach_de_tai.xlsx` là catalog **capstone**: 78,1% đề đòi deploy online, 63,9% đòi đăng nhập, 79,2% đòi ≥2 vai trò, max 2 team/đề. Còn `01-de-bai.md` của mini-hackathon nói rõ *"không yêu cầu deploy"*. **Fathom là deliverable hackathon; người dùng của nó là sinh viên đang chọn đề capstone.** Persona ở trên nói về loại thứ hai.
 
 Trục phân loại trong/ngoài đối tượng rút ra từ khảo sát (Evidence chuẩn A), không phải giả định trước: 17 người tự tách làm hai nhóm theo việc **pain và bằng chứng có đến kèm sẵn trong môi trường họ đang sống hay không**.
 
@@ -166,7 +166,7 @@ Bốn chain của thành viên nhóm **vẫn giữ** vì chúng là dữ liệu 
 
 | # | Ứng viên | Bao nhiêu người | Tần suất | Tốn gì mỗi lần | Build nổi? | Chọn? |
 |---|---|---|---|---|---|---|
-| 1 | **Đào Gốc** — khảo sát 5-why thích ứng | 8/15 *(cụm B)* | mỗi lần đi phỏng vấn | 3 ngày / 5 người *(Minh)* | Cao — golden set có sẵn | ✅ **CHỌN** |
+| 1 | **Fathom** — khảo sát 5-why thích ứng | 8/15 *(cụm B)* | mỗi lần đi phỏng vấn | 3 ngày / 5 người *(Minh)* | Cao — golden set có sẵn | ✅ **CHỌN** |
 | 2 | Máy sàng pain — verdict đủ/chưa đủ căn cứ | 6/15 *(cụm C)* | mỗi vòng chọn đề tài | 1–4 tuần *(Minh 4t, Trọng 1t)* | Cao | 🟨 dự phòng |
 | 3 | Khai thác pain từ môi trường đang sống | 4/15 *(cụm A)* | 1× đầu dự án | — | **Thấp** | ❌ loại |
 | 4 | Tài liệu hoá quy trình/thói quen quan sát | 3/15 *(cụm E)* | 1× đầu dự án | — | Cao | ❌ loại |
@@ -214,7 +214,7 @@ Cụm B hiện có reach cao nhất (8/15, so với C là 6/15). Nhóm chọn #1
 | | |
 |---|---|
 | **Flow** | người phỏng vấn tự nghe, tự quyết hỏi gì tiếp |
-| **Đáng học** | **chuẩn vàng về chất lượng** — đây là thứ Đào Gốc cố mô phỏng, không phải thứ nó cố thay thế |
+| **Đáng học** | **chuẩn vàng về chất lượng** — đây là thứ Fathom cố mô phỏng, không phải thứ nó cố thay thế |
 | **Đáng né** | đắt (3 ngày/5 người) và chất lượng phụ thuộc kỹ năng người hỏi — Ẩn danh 2 nói thẳng: *"không biết nên khảo sát như nào"* |
 | **Mình khác gì** | không cần người phỏng vấn có kỹ năng; đổi lại chấp nhận chất lượng thấp hơn phỏng vấn tay giỏi |
 

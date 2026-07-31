@@ -1,6 +1,6 @@
 # Reflection cá nhân — Lê Quang Huy
 
-**Dự án:** Đào Gốc — khảo sát 5-why thích ứng giúp học viên tìm painpoint có căn cứ
+**Dự án:** Fathom — khảo sát 5-why thích ứng giúp học viên tìm painpoint có căn cứ
 **Mã sinh viên:** 2A202601821
 **Nhóm:** Batch 03 (Khoá 3) · Zone [Điền Zone của bạn]
 **Ngày nộp:** 30/07/2026

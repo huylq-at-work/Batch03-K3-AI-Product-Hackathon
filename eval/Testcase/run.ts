@@ -1,5 +1,5 @@
 /**
- * Entry point chạy được cho bộ testcase của Đào Gốc.
+ * Entry point chạy được cho bộ testcase của Fathom.
  *
  * Chạy từ thư mục codebase:
  *   npm run test:testcase

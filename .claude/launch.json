@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dao-goc",
+      "name": "fathom",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "codebase"],
       "port": 5173

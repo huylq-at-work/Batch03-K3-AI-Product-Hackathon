@@ -27,7 +27,7 @@ function Login() {
   return (
     <div className="wrap narrow">
       <div className="card">
-        <h1>Đào Gốc</h1>
+        <h1>Fathom</h1>
         <p className="muted">Cố vấn tìm painpoint thật cho đề tài capstone của bạn.</p>
 
         <div className="notice warn">

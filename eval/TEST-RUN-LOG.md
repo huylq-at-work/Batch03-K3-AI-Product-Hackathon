@@ -1,4 +1,4 @@
-# Log chạy test — Đào Gốc
+# Log chạy test — Fathom
 
 **Thời điểm chạy:** 2026-07-30  
 **Provider:** Mock (rule-based, KHÔNG phải AI thật)  

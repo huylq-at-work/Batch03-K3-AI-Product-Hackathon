@@ -1,4 +1,4 @@
-# Test Log — Đào Gốc: Khảo sát 5-why thích ứng
+# Test Log — Fathom: Khảo sát 5-why thích ứng
 
 **Thời điểm:** 2026-07-31  
 **Lệnh chạy:** `cd codebase && npm run test:testcase`  

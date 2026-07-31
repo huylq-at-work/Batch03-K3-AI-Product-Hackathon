@@ -82,7 +82,7 @@ localStorage. Màn hình lỗi đã nói rõ thay vì fail âm thầm.
 
 Nếu nhóm định dùng link này để thu 20 người thì **chưa được**. Ba đường:
 (a) tất cả trả lời trên một máy, (b) dựng backend — ngoài phạm vi 1,5 ngày,
-(c) Google Form thu song song, Đào Gốc dùng cho 5 phiên demo + validation.
+(c) Google Form thu song song, Fathom dùng cho 5 phiên demo + validation.
 
 Chọn đường nào cũng phải ghi vào `spec.md` §4 (mức prototype) — **khai sai mức là
 mất 2 điểm R5**.

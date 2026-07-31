@@ -1,10 +1,10 @@
 > **File này là phần 1/4 của nhóm — Agent core (stage ★).**
 > Bản tự chứa để đọc rời. Bản gốc + 3 phần còn lại: https://github.com/huylq-at-work/Batch03-K3-AI-Product-Hackathon/tree/main/phan-cong
 
-# Nhóm [XX] · Đào Gốc — Phần 1: Agent core (stage ★)
+# Nhóm [XX] · Fathom — Phần 1: Agent core (stage ★)
 
 **Đề tài:** Xây dựng agent AI khảo sát 5-why thích ứng giúp học viên xác định painpoint
-có căn cứ cho dự án. **Lát cắt build:** Đào Gốc — khảo sát 5-why thích ứng.
+có căn cứ cho dự án. **Lát cắt build:** Fathom — khảo sát 5-why thích ứng.
 
 Đọc trước khi bắt đầu: [`spec.md`](https://github.com/huylq-at-work/Batch03-K3-AI-Product-Hackathon/blob/main/spec.md) ·
 [`flow.html`](https://github.com/huylq-at-work/Batch03-K3-AI-Product-Hackathon/blob/main/flow.html) (mở bằng browser, sơ đồ flow)

@@ -1,10 +1,10 @@
 > **File này là phần 3/4 của nhóm — UI & demo.**
 > Bản tự chứa để đọc rời. Bản gốc + 3 phần còn lại: https://github.com/huylq-at-work/Batch03-K3-AI-Product-Hackathon/tree/main/phan-cong
 
-# Nhóm [XX] · Đào Gốc — Phần 3: UI & demo
+# Nhóm [XX] · Fathom — Phần 3: UI & demo
 
 **Đề tài:** Xây dựng agent AI khảo sát 5-why thích ứng giúp học viên xác định painpoint
-có căn cứ cho dự án. **Lát cắt build:** Đào Gốc — khảo sát 5-why thích ứng.
+có căn cứ cho dự án. **Lát cắt build:** Fathom — khảo sát 5-why thích ứng.
 
 Đọc trước khi bắt đầu: [`spec.md`](https://github.com/huylq-at-work/Batch03-K3-AI-Product-Hackathon/blob/main/spec.md) ·
 [`flow.html`](https://github.com/huylq-at-work/Batch03-K3-AI-Product-Hackathon/blob/main/flow.html) (mở bằng browser, sơ đồ flow)
@@ -164,7 +164,7 @@ localStorage. Màn hình lỗi đã nói rõ thay vì fail âm thầm.
 
 Nếu nhóm định dùng link này để thu 20 người thì **chưa được**. Ba đường:
 (a) tất cả trả lời trên một máy, (b) dựng backend — ngoài phạm vi 1,5 ngày,
-(c) Google Form thu song song, Đào Gốc dùng cho 5 phiên demo + validation.
+(c) Google Form thu song song, Fathom dùng cho 5 phiên demo + validation.
 
 Chọn đường nào cũng phải ghi vào `spec.md` §4 (mức prototype) — **khai sai mức là
 mất 2 điểm R5**.

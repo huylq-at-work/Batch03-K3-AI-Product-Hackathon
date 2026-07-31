@@ -1,9 +1,9 @@
 {
-  "name": "dao-goc",
+  "name": "fathom",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Đào Gốc — khảo sát 5-why thích ứng (lát cắt của đề tài Pain Compiler)",
+  "description": "Fathom — khảo sát 5-why thích ứng (lát cắt của đề tài Pain Compiler)",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

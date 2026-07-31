@@ -1,4 +1,4 @@
-# Bộ câu thử — Đào Gốc
+# Bộ câu thử — Fathom
 
 ## Chạy bộ test
 
@@ -27,7 +27,7 @@ npm run test:testcase
 
 **Bộ câu thử có bao nhiêu kiểu tình huống?** **4**
 
-**Mô tả:** Bộ câu thử kiểm tra quyết định AI trung tâm của Đào Gốc: gán nhãn câu trả lời vào `triệu_chứng`, `điều_kiện` hoặc `nguyên_nhân`; quyết định hỏi tiếp hay dừng; không mớm đáp án; không bịa thông tin hoặc con số; và từ chối yêu cầu ngoài phạm vi. Mỗi case dưới đây ghi rõ đầu vào và hành vi sản phẩm bắt buộc phải trả về. Các câu từ phỏng vấn thật được dùng làm đầu vào, còn kết quả mong đợi và tiêu chí pass/fail do nhóm tự xác định.
+**Mô tả:** Bộ câu thử kiểm tra quyết định AI trung tâm của Fathom: gán nhãn câu trả lời vào `triệu_chứng`, `điều_kiện` hoặc `nguyên_nhân`; quyết định hỏi tiếp hay dừng; không mớm đáp án; không bịa thông tin hoặc con số; và từ chối yêu cầu ngoài phạm vi. Mỗi case dưới đây ghi rõ đầu vào và hành vi sản phẩm bắt buộc phải trả về. Các câu từ phỏng vấn thật được dùng làm đầu vào, còn kết quả mong đợi và tiêu chí pass/fail do nhóm tự xác định.
 
 ## Kiểm tra đủ 4 kiểu tình huống
 

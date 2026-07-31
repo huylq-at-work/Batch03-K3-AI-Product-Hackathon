@@ -1,4 +1,4 @@
-# Log khảo sát 5-why — Đào Gốc
+# Log khảo sát 5-why — Fathom
 
 **Người phụ trách:** Nguyễn Chí Hướng — 2A202601203  
 **Mục đích:** lưu câu hỏi và câu trả lời nguyên văn để người chấm có thể lần ngược từ số liệu trong `spec.md` §1–§2.  

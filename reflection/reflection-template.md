@@ -1,6 +1,6 @@
 # Reflection cá nhân — [Tên]
 
-**Dự án:** Đào Gốc — khảo sát 5-why thích ứng  
+**Dự án:** Fathom — khảo sát 5-why thích ứng  
 **Nhóm:** [XX] · Zone [X]  
 **Ngày nộp:** ___  
 
