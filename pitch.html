@@ -98,6 +98,8 @@
   .brand{position:fixed;top:22px;left:clamp(28px,8vw,110px);font:700 15px/1 var(--mono);letter-spacing:-.01em;color:var(--ink-3);z-index:5}
   .nav{position:fixed;top:0;bottom:0;width:22%;z-index:4;cursor:pointer;border:none;background:transparent}
   .nav.prev{left:0} .nav.next{right:0}
+  .nav:focus,.nav:focus-visible{outline:none}
+  .dots button:focus-visible{outline:2px solid var(--star);outline-offset:2px}
   .hint{position:fixed;bottom:20px;left:24px;font:500 11px/1 var(--mono);color:var(--ink-3);z-index:5}
   @media(max-width:720px){
     .stats{grid-template-columns:repeat(2,1fr)} .two{grid-template-columns:1fr}
