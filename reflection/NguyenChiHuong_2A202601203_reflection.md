@@ -2,7 +2,7 @@
 
 **Mã sinh viên:** 2A202601203  
 **Dự án:** Xây dựng agent AI khảo sát 5-why thích ứng giúp học viên xác định painpoint có căn cứ cho dự án
-**Nhóm:** [XX] · Zone [X]  
+**Nhóm:** Batch 03 (Khoá 3) · Zone [X]  
 **Ngày nộp:** 31/07/2026  
 
 ---
