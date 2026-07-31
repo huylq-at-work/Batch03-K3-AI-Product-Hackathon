@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fathom — Slide giới thiệu</title>
+<style>
+  :root{
+    --bg:#fbfaf8; --panel:#ffffff; --ink:#1c1a17; --ink-2:#57524b; --ink-3:#8a8378;
+    --line:#e0dcd4; --line-2:#c9c3b8;
+    --star:#b7791f; --star-bg:#fdf6e6; --star-line:#e0b355;
+    --ok:#2f6b4f; --ok-bg:#eef6f1; --no:#a03d33; --no-bg:#fbeeec;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#131211; --panel:#1c1b19; --ink:#f0ede8; --ink-2:#b3aca2; --ink-3:#837c72;
+      --line:#302e2b; --line-2:#454239;
+      --star:#e3b558; --star-bg:#241f13; --star-line:#6b5426;
+      --ok:#7fc3a0; --ok-bg:#16241d; --no:#e08b80; --no-bg:#2a1b19;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:var(--bg); color:var(--ink);
+    font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+
+  .deck{position:fixed;inset:0}
+  .slide{
+    position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:min(8vh,72px) clamp(28px,8vw,110px);
+    opacity:0;visibility:hidden;transform:translateY(14px);
+    transition:opacity .45s ease,transform .45s ease,visibility .45s;
+    overflow-y:auto;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none}
+  .inner{width:100%;max-width:1000px;margin:auto}
+
+  .kicker{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--star);margin-bottom:22px}
+  h1{margin:0;font-weight:700;letter-spacing:-.03em;line-height:1;font-size:clamp(56px,13vw,140px)}
+  h2{margin:0 0 8px;font-weight:680;letter-spacing:-.02em;line-height:1.1;font-size:clamp(28px,5.2vw,52px)}
+  .lead{font-size:clamp(17px,2.4vw,23px);color:var(--ink-2);max-width:64ch;margin:18px 0 0}
+  .lead b{color:var(--ink)}
+  p{color:var(--ink-2)}
+  .accent{color:var(--star)}
+  .no{color:var(--no)} .ok{color:var(--ok)}
+
+  /* title slide */
+  .title h1{background:none}
+  .title .tag{margin:24px 0 0;font-size:clamp(18px,2.6vw,26px);color:var(--ink-2);max-width:60ch}
+  .title .who{margin-top:44px;font:600 13px/1.5 var(--mono);letter-spacing:.06em;color:var(--ink-3)}
+  .pill{display:inline-block;padding:4px 12px;border:1px solid var(--star-line);border-radius:999px;
+    background:var(--star-bg);color:var(--star);font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+
+  /* stat grid */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 20px}
+  .stat .num{font-weight:720;letter-spacing:-.02em;line-height:1;font-size:clamp(34px,5vw,50px)}
+  .stat .lab{margin-top:10px;font-size:14.5px;color:var(--ink-2);line-height:1.4}
+  .stat.hl{background:var(--star-bg);border-color:var(--star-line)}
+  .stat.hl .num{color:var(--star)}
+  .src{margin-top:22px;font:500 13px/1.5 var(--mono);color:var(--ink-3)}
+
+  /* generic list */
+  ul.big{list-style:none;padding:0;margin:26px 0 0;display:grid;gap:18px}
+  ul.big li{display:flex;gap:16px;align-items:flex-start;font-size:clamp(16px,2.1vw,20px)}
+  ul.big .b{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:var(--star-bg);
+    border:1px solid var(--star-line);color:var(--star);display:flex;align-items:center;justify-content:center;
+    font:700 15px/1 var(--mono)}
+  ul.big li b{color:var(--ink)}
+  ul.big li span.t{color:var(--ink-2)}
+
+  /* flow row */
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:30px}
+  .flow .step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;
+    font-weight:600;font-size:15px}
+  .flow .step.star{background:var(--star-bg);border-color:var(--star-line);color:var(--star)}
+  .flow .arr{color:var(--ink-3);font-size:18px}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:26px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+  .card h3{margin:0 0 10px;font-size:19px;letter-spacing:-.01em}
+  .card p{margin:0;font-size:15.5px}
+  .card .tag2{font:600 10px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--star);display:block;margin-bottom:10px}
+
+  .note{margin-top:26px;padding:14px 16px;border-left:3px solid var(--star);background:var(--star-bg);
+    border-radius:0 8px 8px 0;font-size:14.5px;color:var(--ink-2)}
+  .note b{color:var(--ink)}
+
+  /* chrome */
+  .dots{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:9px;z-index:5}
+  .dots button{width:9px;height:9px;border-radius:50%;border:none;background:var(--line-2);cursor:pointer;padding:0;transition:.2s}
+  .dots button.on{background:var(--star);transform:scale(1.25)}
+  .count{position:fixed;bottom:20px;right:24px;font:600 12px/1 var(--mono);color:var(--ink-3);z-index:5}
+  .brand{position:fixed;top:22px;left:clamp(28px,8vw,110px);font:700 15px/1 var(--mono);letter-spacing:-.01em;color:var(--ink-3);z-index:5}
+  .nav{position:fixed;top:0;bottom:0;width:22%;z-index:4;cursor:pointer;border:none;background:transparent}
+  .nav.prev{left:0} .nav.next{right:0}
+  .hint{position:fixed;bottom:20px;left:24px;font:500 11px/1 var(--mono);color:var(--ink-3);z-index:5}
+  @media(max-width:720px){
+    .stats{grid-template-columns:repeat(2,1fr)} .two{grid-template-columns:1fr}
+    .brand{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="brand">Fathom</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · TITLE -->
+  <section class="slide title active">
+    <div class="inner">
+      <span class="pill">Mini Hackathon AI · Batch 03 · đề tài Pain Compiler</span>
+      <h1 style="margin-top:26px">Fathom</h1>
+      <p class="tag">Khảo sát <b class="accent">5-why thích ứng</b> — giúp học viên tìm <b>painpoint thật, có căn cứ</b> cho đề tài capstone, thay vì đoán mò rồi làm lại từ đầu.</p>
+      <div class="who">Nhóm D305-A1 · Hướng · Đạt · Liên · Huy</div>
+    </div>
+  </section>
+
+  <!-- 2 · VẤN ĐỀ -->
+  <section class="slide">
+    <div class="inner">
+      <div class="kicker">Vấn đề</div>
+      <h2>Chọn 1 trong <span class="accent">360 đề tài</span> — mà không có cách biết đề nào đáng làm.</h2>
+      <p class="lead">Sinh viên K3/K4 verify ý tưởng bằng <b>Google Form tĩnh</b>: hỏi xong là hết, không đào tiếp được khi gặp câu trả lời hời hợt.</p>
+      <div class="flow">
+        <span class="step">Nghĩ vài ý tưởng</span><span class="arr">→</span>
+        <span class="step">Không có tiêu chí biết ý nào đáng</span><span class="arr">→</span>
+        <span class="step">Form / phỏng vấn tay</span><span class="arr">→</span>
+        <span class="step no" style="border-color:var(--no)">Câu trả lời hời hợt</span><span class="arr">→</span>
+        <span class="step no" style="border-color:var(--no)">1–4 tuần sau: “đề không đáng làm”</span><span class="arr">↻</span>
+        <span class="step">Về lại số 0</span>
+      </div>
+      <p class="lead" style="margin-top:24px">Cái mất không phải công sức — mà là <b>1–4 tuần</b> trước khi kịp nhận ra mình chọn sai.</p>
+    </div>
+  </section>
+
+  <!-- 3 · BẰNG CHỨNG -->
+  <section class="slide">
+    <div class="inner">
+      <div class="kicker">Bằng chứng · số liệu nhóm tự nghiên cứu</div>
+      <h2>Pain này <span class="accent">đo được</span>, không phải cảm giác.</h2>
+      <div class="stats">
+        <div class="stat"><div class="num">360</div><div class="lab">đề tài capstone · 21 khối — mỗi SV phải chọn</div></div>
+        <div class="stat"><div class="num">8,0 giờ</div><div class="lab">đọc hết 360 đề (~95.558 từ @200 từ/phút)</div></div>
+        <div class="stat hl"><div class="num">4,7%</div><div class="lab">đề có số liệu định lượng — <b>95,3% không có gì để quy đổi</b></div></div>
+        <div class="stat"><div class="num">135</div><div class="lab">/360 đề tên “AI Agent + động từ” na ná, khó phân biệt</div></div>
+        <div class="stat hl"><div class="num">11/13</div><div class="lab">người ngoài nhóm khảo sát <b>xác nhận có friction</b></div></div>
+        <div class="stat"><div class="num">1–4 tuần</div><div class="lab">tìm đề (trong đối tượng) &nbsp;vs&nbsp; <b>15 phút</b> (đã có pain sẵn)</div></div>
+      </div>
+      <div class="src">Nguồn: mining <code>Danh_sach_de_tai.xlsx</code> (script chạy lại ra cùng số) + khảo sát 17 người, 13 ngoài nhóm.</div>
+    </div>
+  </section>
+
+  <!-- 4 · GIẢI PHÁP -->
+  <section class="slide">
+    <div class="inner">
+      <div class="kicker">Giải pháp</div>
+      <h2>Fathom = <span class="accent">cố vấn 5-why</span> + <span class="accent">tự sinh khảo sát</span>.</h2>
+      <div class="two">
+        <div class="card">
+          <span class="tag2">① Chatbot cố vấn</span>
+          <h3>Đào tới nguyên nhân gốc</h3>
+          <p>Nhận đề tài → research web → hỏi “vì sao” thích ứng tới <b>nguyên nhân can thiệp được</b>, rồi dừng đúng lúc — không hỏi lê thê.</p>
+        </div>
+        <div class="card">
+          <span class="tag2">② Sub-agent khảo sát</span>
+          <h3>Validate với người thật</h3>
+          <p>Tự dựng khảo sát, gửi link cho người khác. Mỗi phản hồi là một <b>why-chain thật</b> → tổng hợp painpoint từ dữ liệu, không suy diễn.</p>
+        </div>
+      </div>
+      <div class="flow">
+        <span class="step star">Nhận đề</span><span class="arr">→</span>
+        <span class="step">Research</span><span class="arr">→</span>
+        <span class="step star">Tạo khảo sát</span><span class="arr">→</span>
+        <span class="step">Thu phản hồi</span><span class="arr">→</span>
+        <span class="step star">Tổng hợp painpoint</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · KHÁC BIỆT -->
+  <section class="slide">
+    <div class="inner">
+      <div class="kicker">Vì sao khác Google Form</div>
+      <h2>Ba thứ một biểu mẫu tĩnh <span class="no">không làm được</span>.</h2>
+      <ul class="big">
+        <li><span class="b">5W</span><span class="t"><b>5-why thích ứng:</b> đào “vì sao” tới nguyên nhân can thiệp được, đa dạng câu hỏi (kể chuyện / tác động), biết khi nào dừng — Form thì hỏi xong là hết.</span></li>
+        <li><span class="b">✓</span><span class="t"><b>Chống bịa bằng code:</b> guard chặn agent bịa mã đề / số liệu; con số phỏng đoán bị gắn nhãn <b>ASSUMPTION</b>, không tính vào kết luận.</span></li>
+        <li><span class="b">Σ</span><span class="t"><b>Tổng hợp từ dữ liệu thật:</b> persona / AI-leverage / MVP đều truy về phản hồi khảo sát thật hoặc nguồn web — không đoán hộ người dùng.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 6 · KẾT QUẢ -->
+  <section class="slide">
+    <div class="inner">
+      <div class="kicker">Kết quả &amp; hướng đi</div>
+      <h2>Chạy thật, <span class="ok">đo trung thực</span>.</h2>
+      <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat"><div class="num ok">85,7%</div><div class="lab">nhãn tầng đúng (golden set 23 case, DeepSeek)</div></div>
+        <div class="stat hl"><div class="num">100%</div><div class="lab">không mớm đáp án — điều kiện cứng, đạt</div></div>
+        <div class="stat"><div class="num ok">95,5%</div><div class="lab">điều kiện dừng đúng (không hỏi cho đủ tầng)</div></div>
+      </div>
+      <p class="lead" style="margin-top:26px"><b>Mục tiêu tác động:</b> rút vòng verify từ <b>1–4 tuần → một buổi phỏng vấn có đào sâu.</b></p>
+      <div class="note"><b>Số % giảm thời gian đo ở CP5</b> (validation với ≥5 người ngoài nhóm) — nhóm không điền số chưa đo, đúng nguyên tắc chống bịa của chính sản phẩm.</div>
+    </div>
+  </section>
+
+</div>
+
+<button class="nav prev" id="prev" aria-label="Slide trước"></button>
+<button class="nav next" id="next" aria-label="Slide sau"></button>
+<div class="dots" id="dots"></div>
+<div class="count" id="count"></div>
+<div class="hint">← → để chuyển slide</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dotsWrap=document.getElementById('dots');
+  const count=document.getElementById('count');
+  let i=0;
+  slides.forEach((_,n)=>{
+    const b=document.createElement('button');
+    b.onclick=()=>go(n); dotsWrap.appendChild(b);
+  });
+  const dots=[...dotsWrap.children];
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    count.textContent=(i+1)+' / '+slides.length;
+  }
+  document.getElementById('next').onclick=()=>go(i+1);
+  document.getElementById('prev').onclick=()=>go(i-1);
+  addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1)}
+    if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+  });
+  go(0);
+</script>
+</body>
+</html>
